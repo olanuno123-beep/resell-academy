@@ -37,6 +37,26 @@ a{color:inherit;text-decoration:none}
 .page{display:none}
 .page.on{display:flex}
 footer{font-size:11px;color:#5E6B66;text-align:center;padding-top:6px}
+.wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.hero{border-radius:28px;padding:22px 20px;background:linear-gradient(180deg,#111816 0%,#0C1110 100%);border:1px solid #1E2826;display:flex;flex-direction:column;gap:6px}
+.big{font-family:Sora,sans-serif;font-weight:800;font-size:42px;letter-spacing:-1.5px;line-height:1.1}
+.note{border-radius:18px;padding:14px 16px;background:#0E1312;border:1px dashed #2A3532;display:flex;gap:10px;align-items:flex-start}
+.note svg{flex-shrink:0;margin-top:1px}
+.pill{min-height:44px;border-radius:14px;border:1px solid #1E2826;background:#111615;color:#C9D3CF;font:600 14px Inter,sans-serif;padding:0 8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill.on{background:#3DDC84;border-color:#3DDC84;color:#06210F;font-weight:700}
+.pill.gold.on{background:rgba(251,191,36,.14);border-color:#FBBF24;color:#FCD34D}
+.sg{min-height:40px;border-radius:12px;color:#9BA8A3;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.sg.on{background:#1E2826;color:#EEF2F0}
+.r3{display:grid;grid-template-columns:minmax(0,1fr) 72px 60px;gap:8px;align-items:baseline;padding:10px 0;border-top:1px solid #1A2321}
+.tile{border-radius:18px;padding:12px 14px;background:#0C1110;border:1px solid #1E2826;display:flex;flex-direction:column;gap:6px}
+.inp{width:100%;min-width:0;min-height:44px;background:#111615;border:1px solid #2A3532;border-radius:12px;padding:0 10px;color:#EEF2F0;font:700 18px Sora,sans-serif}
+.inp:disabled{opacity:.6}
+input::placeholder{color:#7E8B86}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(11,15,14,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid #1E2826;padding:6px 6px max(8px,env(safe-area-inset-bottom))}
+.tabs>div{max-width:440px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}
+.tb{min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#7E8B86;font-size:11px;font-weight:600}
+.tb.on{color:#3DDC84;font-weight:700}
+.upd{background:none;border:0;color:#7E8B86;font:500 12px Inter,sans-serif;min-height:44px;padding:0 12px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -49,7 +69,7 @@ var META=7;
 // Preços de venda estimados por modelo (para a previsão). Modelos sem preço: custo + lucro médio do mês.
 var PRECOS={'iphone 11':95,'iphone xr':85,'macbook pro 2019':300,'iphone 11 pro':120,'mac mini':90,'iphone 12':75,'iphone 12 pro':80};
 var PRECO_REF={'REF 825':100,'REF 843':200,'REF 848':200};
-function temPreco(x){var k=String(x.p).toLowerCase().replace(/\s+/g,' ').trim();return PRECO_REF[x.r]!=null?PRECO_REF[x.r]:(PRECOS[k]!=null?PRECOS[k]:null)}
+function temPreco(x){var k=String(x.p).toLowerCase().replace(/\s+/g,' ').trim();if(typeof LP!=='undefined'&&LP[x.r]!=null)return LP[x.r];return PRECO_REF[x.r]!=null?PRECO_REF[x.r]:(PRECOS[k]!=null?PRECOS[k]:null)}
 function precoEst(x,lm){var p=temPreco(x);return p!=null?p:x.c+lm}
 var MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 var SEM=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
@@ -107,8 +127,8 @@ function calc(D){
   var nv=itens.filter(function(x){return !(x.v>0)||/^(entregue|por enviar)$/i.test(x.e)}), g={ch:0,ca:0,av:0,en:0,rec:0,luc:0}, parados=[];
   nv.forEach(function(x){var e=x.e.toLowerCase();
     if(/^(entregue|por enviar)$/.test(e)){g.en++;var vv=(x.v>0?x.v:(x.pv||0));g.rec+=vv;if(vv>0)g.luc+=vv-x.c}
-    else if(/enviado|espera|levantar/.test(e))g.ch++;
-    else{ if(/venda/.test(e))g.av++; else g.ca++; parados.push({x:x,dias:x.d?Math.round((hoje-parse(x.d))/864e5):null,venda:/venda/.test(e)}) }});
+    else if(!/pe[çc]as/.test(e)&&/enviado|espera|levantar/.test(e))g.ch++;
+    else{ if(/venda/.test(e))g.av++; else g.ca++; parados.push({x:x,dias:x.d?Math.round((hoje-parse(x.d))/864e5):null,venda:/venda/.test(e),pecas:/pe[çc]as/.test(e)}) }});
   parados.sort(function(a,b){return (b.dias||0)-(a.dias||0)});
   var nivel=0; NIVEIS.forEach(function(n,i){if(c.lucro>=n.min)nivel=i});
   return {hoje:hoje,wk:wk,ss:ss,rows:rows,best6:best6,bestAll:bestAll,metaAlguma:metaAlguma,c:c,p:p,dim:dim,pm:pmD,mesMil:mesMil,cem:cem,best:best,nv:nv,g:g,parados:parados,nivel:nivel,
@@ -161,23 +181,23 @@ function inicio(S){
     '<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px" class="muted">Lucro médio/venda</span><span class="sora" style="font-weight:700;font-size:20px">'+(c.v.length?eur(c.lucro/c.v.length):'—')+'</span></div>'+
     '<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px" class="muted">Investido</span><span class="sora" style="font-weight:700;font-size:20px">'+eur(c.inv)+'</span></div>'+
     '<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px" class="muted">Melhor venda</span><span class="sora" style="font-weight:700;font-size:20px;color:#3DDC84">'+(S.best?'+'+eur(S.best.l):'—')+'</span>'+(S.best?'<span style="font-size:11px;color:#7E8B86">'+esc(S.best.p)+'</span>':'')+'</div></div>'+
-  '<a href="#stock" class="btn" style="background:#3DDC84;color:#06210F">Ver stock '+ico(I.arrow,'#06210F',18,2.4)+'</a>';
+  '<div class="g2"><a href="#stock" class="btn" style="background:#3DDC84;color:#06210F">Ver stock '+ico(I.arrow,'#06210F',18,2.4)+'</a><a href="#semana" class="btn" style="background:#111615;border:1px solid #1E2826;color:#EEF2F0">Resumo da semana</a></div>';
 }
 
 function stock(S){
   var g=S.g, cards='';
   S.parados.forEach(function(o){var d=o.dias, col=d===null?'#7E8B86':d>21?'#F87171':d>=14?'#FB923C':'#3DDC84', bc=d===null?'#1E2826':d>21?'rgba(248,113,113,.45)':d>=14?'rgba(251,146,60,.4)':'#1E2826';
     var txt=d===null?'sem data':d>21?'+21 dias · baixa o preço ou republica':d>=14?'14–21 dias · atenção':'menos de 14 dias · tudo bem';
-    cards+='<div style="border-radius:22px;padding:12px;background:#111615;border:1px solid '+bc+';display:flex;gap:12px;align-items:center">'+
+    cards+='<a href="#a/'+encodeURIComponent(o.x.r)+'" style="border-radius:22px;padding:12px;background:#111615;border:1px solid '+bc+';display:flex;gap:12px;align-items:center">'+
       '<div style="width:56px;height:56px;border-radius:16px;background:#1A2321;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(I.phone,'#7E8B86',24,1.8)+'</div>'+
       '<div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><span style="font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(o.x.p)+' <span style="font-size:12px;font-weight:500" class="muted">'+esc(o.x.r.replace('REF ',''))+'</span></span><span style="font-size:12px;font-weight:600;color:'+col+';white-space:nowrap">'+(d===null?'':'há '+d+' dias')+'</span></div>'+
       '<div style="height:6px;border-radius:99px;background:#1A2321"><div style="width:'+(d===null?0:Math.min(100,d/21*100))+'%;height:6px;border-radius:99px;background:'+col+'"></div></div>'+
-      '<span style="font-size:12px" class="muted">'+(o.venda?'À venda':'Em casa')+' · '+txt+'</span></div></div>'});
+      '<span style="font-size:12px" class="muted">'+(o.venda?'À venda':o.pecas?'À espera de peças':'Em casa')+' · '+txt+'</span></div></a>'});
   var alerta='';
   if(g.ca>0&&g.ch>g.av) alerta='Tens '+g.ch+' a chegar e só '+g.av+' à venda. Antes de comprar mais, põe à venda '+(g.ca===1?'o que está em casa':'os '+g.ca+' que estão em casa')+'.';
   else if(g.ch>g.av*2&&g.av>0) alerta='Tens '+g.ch+' a chegar e '+g.av+' à venda. Quando chegarem, publica-os logo.';
   return '<div class="glow" style="top:-160px;right:-120px;background:radial-gradient(closest-side,rgba(96,165,250,.2),rgba(96,165,250,0) 70%)"></div>'+
-  '<div class="top"><a href="#" class="back" aria-label="Voltar ao início">'+ico(I.back,'#EEF2F0',20,2.2)+'</a><span class="sora" style="font-weight:700;font-size:18px">Stock</span><span style="width:44px"></span></div>'+
+  '<div class="top"><a href="#" class="back" aria-label="Voltar ao início">'+ico(I.back,'#EEF2F0',20,2.2)+'</a><span class="sora" style="font-weight:700;font-size:18px">Stock</span><span style="width:44px"></span></div>'+pesquisaHTML()+
   '<div style="border-radius:28px;padding:22px 20px;background:linear-gradient(180deg,#111816 0%,#0C1110 100%);border:1px solid #1E2826;display:flex;flex-direction:column;gap:16px">'+
     '<div style="display:flex;flex-direction:column;gap:2px"><span class="lbl">CAPITAL EM STOCK</span><span class="sora" style="font-weight:800;font-size:40px;letter-spacing:-1.5px">'+eur(S.cap)+'</span><span style="font-size:13px" class="muted">'+S.nv.length+' artigos</span></div>'+
     '<div style="display:flex;gap:4px;height:12px">'+(g.ch?'<div style="flex:'+g.ch+';border-radius:99px;background:#60A5FA"></div>':'')+(g.ca?'<div style="flex:'+g.ca+';border-radius:99px;background:#FBBF24"></div>':'')+(g.av?'<div style="flex:'+g.av+';border-radius:99px;background:#3DDC84"></div>':'')+(g.en?'<div style="flex:'+g.en+';border-radius:99px;background:#C084FC"></div>':'')+'</div>'+
@@ -229,14 +249,275 @@ function nivel(S){
 }
 
 var DATA=null;
-function show(){
-  if(!DATA) return;
-  var S=calc(DATA), h=(location.hash||'').replace('#','');
-  var html=h==='stock'?stock(S):h==='nivel'?nivel(S):inicio(S);
-  document.getElementById('app').innerHTML='<div class="wrap">'+html+'<footer>Atualizado às '+DATA.agora.slice(11,16)+'</footer></div>';
-  window.scrollTo(0,0);
+// ===== Resell Academy v3: Comprar, Números, Ano, Semana, Ficha do artigo, separadores =====
+var LP={};try{LP=JSON.parse(localStorage.getItem('precos'))||{}}catch(e){}
+var UI={m:null,a:1,o:'',meta:1000,e:null};
+try{UI.meta=Number(localStorage.getItem('meta'))||1000}catch(e){}
+var ALVOS=[30,40,50];
+I.tag='<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"></path><circle cx="7.5" cy="7.5" r="1.5"></circle>';
+I.home='<path d="M3 10.5L12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path>';
+I.box='<path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path>';
+I.chart='<path d="M3 21h18"></path><path d="M6 17v-6"></path><path d="M11 17V6"></path><path d="M16 17v-9"></path>';
+I.doc='<path d="M6 2h9l5 5v15H6z"></path><path d="M14 2v6h6"></path><path d="M9 13h7"></path><path d="M9 17h5"></path>';
+I.gift='<rect x="3" y="8" width="18" height="13" rx="2"></rect><path d="M3 12h18"></path><path d="M12 8v13"></path><path d="M12 8c-1.5-3-5-4-5-1.5S10 8 12 8z"></path><path d="M12 8c1.5-3 5-4 5-1.5S14 8 12 8z"></path>';
+I.down='<path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 21h16"></path>';
+I.search='<circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path>';
+I.cal='<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path>';
+I.dn='<path d="M3 7l6 6 4-4 8 8"></path><path d="M15 17h6v-6"></path>';
+
+function num(v){var n=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(',','.'));return isNaN(n)?null:n}
+function soma(a,f){return a.reduce(function(s,x){return s+f(x)},0)}
+function chave(p){return String(p).trim().toLowerCase().replace(/\s+/g,' ')}
+function curto(n){return String(n).trim().replace(/^iphone\s*/i,'').replace(/\s*\((.+)\)/,' → $1')}
+function vendido(x){return x.v>0&&!/^(entregue|por enviar)$/i.test(x.e)}
+function lucroPrev(x,lm){var ent=/^(entregue|por enviar)$/i.test(x.e),vv=x.v>0?x.v:(x.pv||0);
+  if(x.v>0&&!ent)return x.l; if(vv>0)return vv-x.c; return precoEst(x,lm)-x.c}
+function lmGeral(){var v=(DATA.itens||[]).filter(function(x){return x.v>0});return v.length?soma(v,function(x){return x.l})/v.length:40}
+
+function grupos(){
+  var g={};(DATA.itens||[]).forEach(function(x){if(!(x.v>0))return;var k=chave(x.p);if(!g[k])g[k]={nome:String(x.p).trim(),a:[]};g[k].a.push(x)});
+  return Object.keys(g).map(function(k){var a=g[k].a,n=a.length,vs=a.map(function(x){return x.v}).sort(function(p,q){return p-q}),custo=soma(a,function(x){return x.c}),tot=soma(a,function(x){return x.l});
+    return {k:k,nome:g[k].nome,a:a,n:n,venda:soma(a,function(x){return x.v})/n,med:n%2?vs[(n-1)/2]:(vs[n/2-1]+vs[n/2])/2,pecas:soma(a,function(x){return x.pc||0})/n,
+      pct:Math.round(a.filter(function(x){return (x.pc||0)>0}).length/n*100),preco:soma(a,function(x){return x.c-(x.pc||0)})/n,lucro:tot/n,tot:tot,roi:custo>0?tot/custo:0}})
+  .sort(function(p,q){return q.tot-p.tot});
 }
-window.addEventListener('hashchange',show);
+function limite(G,alvo){return G.venda-G.pecas-alvo}
+function seg2(h,a,b){return '<nav aria-label="Secções" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px;border-radius:16px;background:#111615;border:1px solid #1E2826">'+
+  '<a href="#numeros" '+(h==='numeros'?'aria-current="page" ':'')+'class="sg'+(h==='numeros'?' on':'')+'">'+a+'</a><a href="#ano" '+(h==='ano'?'aria-current="page" ':'')+'class="sg'+(h==='ano'?' on':'')+'">'+b+'</a></nav>'}
+function titulo(t,sub){return '<div style="display:flex;flex-direction:column;gap:2px"><h1 class="sora" style="font-weight:700;font-size:26px;letter-spacing:-.5px">'+t+'</h1>'+(sub?'<span style="font-size:13px" class="muted">'+sub+'</span>':'')+'</div>'}
+
+// ---------- COMPRAR ----------
+var CUR=null;
+function comprar(S){
+  var todos=grupos(), G=todos.filter(function(g){return g.n>=3}).sort(function(p,q){return q.n-p.n}).slice(0,6);
+  var out='<div class="glow" style="top:-150px;right:-110px;background:radial-gradient(closest-side,rgba(251,191,36,.16),rgba(251,191,36,0) 70%)"></div>'+titulo('Comprar','Antes de fazeres uma oferta');
+  if(!G.length)return out+'<div class="card">Ainda não há vendas suficientes para calcular.</div>';
+  var sel=G.filter(function(g){return g.k===UI.m})[0]||G[0];UI.m=sel.k;CUR=sel;
+  var alvo=ALVOS[UI.a], max=limite(sel,alvo);
+  var chips=G.map(function(g){var on=g.k===sel.k;return '<button type="button" class="pill'+(on?' on':'')+'" aria-pressed="'+on+'" data-m="'+esc(g.k)+'" onclick="UI.m=this.getAttribute(\'data-m\');show(true)">'+esc(curto(g.nome))+'</button>'}).join('');
+  var al=ALVOS.map(function(v,i){var on=i===UI.a;return '<button type="button" class="pill gold'+(on?' on':'')+'" aria-pressed="'+on+'" onclick="UI.a='+i+';show(true)">+'+v+' €</button>'}).join('');
+  var bands='';
+  if(sel.n>=8){var base=Math.round(sel.preco/10)*10,cuts=[base-10,base,base+10],B=[[],[],[],[]];
+    sel.a.forEach(function(x){var p=x.c-(x.pc||0),i=p<=cuts[0]?0:p<=cuts[1]?1:p<=cuts[2]?2:3;B[i].push(x.l)});
+    var labs=['Até '+cuts[0]+' €',cuts[0]+' a '+cuts[1]+' €',cuts[1]+' a '+cuts[2]+' €','Mais de '+cuts[2]+' €'],mx=1;
+    B.forEach(function(b){if(b.length)mx=Math.max(mx,soma(b,function(y){return y})/b.length)});
+    B.forEach(function(b,i){if(!b.length)return;var m=soma(b,function(y){return y})/b.length,ok=m>=alvo;
+      bands+='<div style="display:flex;flex-direction:column;gap:6px"><div class="hdr"><span style="font-size:14px;font-weight:600">'+labs[i]+' <span style="font-size:12px;font-weight:400" class="muted">· '+b.length+(b.length===1?' venda':' vendas')+'</span></span><span class="sora" style="font-weight:700;font-size:15px">+'+eur(m,0)+'</span></div>'+
+        '<div style="height:10px;border-radius:99px;background:#1A2321"><div style="width:'+Math.max(3,m/mx*100)+'%;height:10px;border-radius:99px;background:'+(ok?'#3DDC84':'#FB923C')+'"></div></div></div>'});
+  }else bands='<span style="font-size:13px;line-height:1.45;color:#C9D3CF">Só tens '+sel.n+' vendas de '+esc(sel.nome)+': o limite usa a média delas, por isso usa-o com cuidado.</span>';
+  // semana passada
+  var mapa={};todos.forEach(function(g){mapa[g.k]=g});
+  var m0=seg(S.hoje),I0=iso(add(m0,-7)),I1=iso(add(m0,-1)),tot=0,acima=0;
+  (DATA.itens||[]).forEach(function(x){if(!x.d||x.d<I0||x.d>I1)return;var g=mapa[chave(x.p)];if(!g||g.n<3)return;tot++;if(x.c-(x.pc||0)>limite(g,alvo))acima++});
+  return out+
+  '<div role="group" aria-label="Modelo" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'+chips+'</div>'+
+  '<div class="hero"><span class="lbl">VENDES EM MÉDIA POR</span><span class="big">'+eur(sel.venda)+'</span><span style="font-size:13px;color:#C9D3CF">'+esc(sel.nome)+' · '+sel.n+' vendas · mediana '+eur(sel.med)+'</span><span style="font-size:13px" class="muted">'+(sel.pct?'Precisou de peças em '+sel.pct+'% das vezes · média '+eur(sel.pecas):'Sem peças nas vendas que fizeste')+'</span></div>'+
+  '<div class="card" style="display:flex;flex-direction:column;gap:14px"><span class="h2">Quanto queres ganhar?</span><div role="group" aria-label="Lucro que queres" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'+al+'</div>'+
+    '<div style="border-radius:20px;padding:16px;background:rgba(61,220,132,.08);border:1px solid rgba(61,220,132,.3);display:flex;flex-direction:column;gap:4px"><span style="font-size:13px;font-weight:600;color:#7CF0B0">Paga no máximo</span><span class="sora" style="font-weight:800;font-size:48px;letter-spacing:-1.5px;line-height:1.05;color:#3DDC84">'+eur(Math.max(0,max),0)+'</span><span style="font-size:12px" class="muted">'+eur(sel.venda)+' venda − '+eur(sel.pecas)+' peças − '+alvo+' € de lucro</span></div></div>'+
+  '<div class="card" style="display:flex;flex-direction:column;gap:14px"><label for="of" class="h2">E se o vendedor pedir…</label>'+
+    '<div style="display:flex;align-items:center;gap:8px;min-height:52px;border-radius:16px;background:#0C1110;border:1px solid #2A3532;padding:0 16px"><input id="of" type="text" inputmode="decimal" autocomplete="off" placeholder="Preço pedido" value="'+esc(UI.o)+'" oninput="UI.o=this.value;updOf()" style="flex:1;min-width:0;min-height:44px;background:transparent;border:0;color:#EEF2F0;font:700 22px Sora,sans-serif"><span class="sora muted" style="font-weight:700;font-size:20px">€</span></div>'+
+    '<div id="ofr"></div></div>'+
+  '<div class="card" style="display:flex;flex-direction:column;gap:14px"><div class="hdr"><span class="h2">Quando pagaste…</span><span style="font-size:12px" class="muted">lucro médio</span></div>'+bands+'</div>'+
+  (tot?'<div class="note">'+ico(I.warn,'#FBBF24',18)+'<span style="font-size:13px;line-height:1.45;color:#C9D3CF">Na semana passada, <b style="color:#EEF2F0">'+acima+' de '+tot+'</b> compras passaram o limite para +'+alvo+' € de lucro.</span></div>':'');
+}
+function updOf(){var el=document.getElementById('ofr');if(!el||!CUR)return;var o=num(UI.o),alvo=ALVOS[UI.a];
+  if(o==null||o<=0){el.innerHTML='<span style="font-size:13px" class="muted">Escreve o preço que o vendedor pede.</span>';return}
+  var l=CUR.venda-CUR.pecas-o,t=l>=alvo?['Dentro do teu alvo','61,220,132','#7CF0B0']:l>=20?['Abaixo do teu alvo','251,146,60','#FDBA74']:['Não compensa','248,113,113','#FCA5A5'];
+  el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px" class="muted">Lucro esperado</span><span class="sora" style="font-weight:800;font-size:30px;letter-spacing:-1px">'+(l<0?'':'+')+eur(l,0)+'</span></div>'+
+    '<span style="padding:8px 12px;border-radius:999px;background:rgba('+t[1]+',.12);border:1px solid rgba('+t[1]+',.45);color:'+t[2]+';font-size:13px;font-weight:600">'+t[0]+'</span></div>'}
+
+// ---------- NÚMEROS: MODELOS ----------
+function numeros(S){
+  var G=grupos(),its=(DATA.itens||[]).filter(function(x){return x.v>0}),tot=soma(its,function(x){return x.l});
+  var main=G.filter(function(g){return g.n>=3}),out=G.filter(function(g){return g.n<3});
+  var cores=['#3DDC84','#60A5FA','#FBBF24'],top=main.slice(0,3),resto=tot-soma(top,function(g){return g.tot});
+  var bar='',leg='';
+  top.forEach(function(g,i){var p=tot>0?g.tot/tot*100:0;bar+='<div style="flex:'+p+';border-radius:99px;background:'+cores[i]+'"></div>';leg+='<div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:99px;background:'+cores[i]+';flex-shrink:0"></span><span style="font-size:13px;color:#C9D3CF">'+esc(curto(g.nome))+' · '+Math.round(p)+'%</span></div>'});
+  if(resto>0){var pr=resto/tot*100;bar+='<div style="flex:'+pr+';border-radius:99px;background:#4B5A55"></div>';leg+='<div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:99px;background:#4B5A55;flex-shrink:0"></span><span style="font-size:13px;color:#C9D3CF">Outros · '+Math.round(pr)+'%</span></div>'}
+  var melhores=main.slice().sort(function(p,q){return q.lucro-p.lucro}),ouro={};melhores.slice(0,2).forEach(function(g){ouro[g.k]=1});
+  var rows='';
+  main.forEach(function(g){rows+='<div class="r3"><span style="font-size:14px;font-weight:600">'+esc(curto(g.nome))+' <span style="font-size:12px;font-weight:400" class="muted">· '+g.n+'</span></span><span class="sora" style="font-weight:700;font-size:15px;text-align:right;color:'+(ouro[g.k]?'#FBBF24':'#3DDC84')+'">+'+eur(g.lucro,0)+'</span><span style="font-size:13px;text-align:right;color:#C9D3CF">'+Math.round(g.roi*100)+'%</span></div>'});
+  if(out.length){var on=soma(out,function(g){return g.n}),ot=soma(out,function(g){return g.tot}),oc=soma(out,function(g){return soma(g.a,function(x){return x.c})});
+    rows+='<div class="r3"><span style="font-size:14px;font-weight:600">Outros <span style="font-size:12px;font-weight:400" class="muted">· '+on+'</span></span><span class="sora" style="font-weight:700;font-size:15px;text-align:right;color:#C9D3CF">+'+eur(ot/on,0)+'</span><span style="font-size:13px;text-align:right;color:#C9D3CF">'+(oc>0?Math.round(ot/oc*100)+'%':'—')+'</span></div>'}
+  var fracos=its.filter(function(x){return x.l<20}).length;
+  var ins='';
+  melhores.slice(0,2).forEach(function(g,i){var c=i?['61,220,132','#7CF0B0','#3DDC84']:['251,191,36','#FCD34D','#FBBF24'];
+    ins+='<div style="border-radius:22px;padding:16px;background:rgba('+c[0]+',.07);border:1px solid rgba('+c[0]+',.3);display:flex;flex-direction:column;gap:6px">'+ico(I.up,c[2],24)+'<span style="font-size:13px;font-weight:600;color:'+c[1]+'">'+esc(curto(g.nome))+'</span><span class="sora" style="font-weight:800;font-size:28px;letter-spacing:-1px">+'+eur(g.lucro,0)+'</span><span style="font-size:12px;line-height:1.45;color:#C9D3CF">por venda, '+Math.round(g.roi*100)+'% de retorno, em '+g.n+' vendas.</span></div>'});
+  var dw=[0,0,0,0,0,0,0];(DATA.compras||[]).forEach(function(c){dw[(parse(c.d).getDay()+6)%7]++});
+  var dmx=Math.max.apply(null,dw.concat([1])),di=dw.indexOf(dmx),DN=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'],DL=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'],db='',dl='';
+  dw.forEach(function(v,i){db+='<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:11px;'+(i===di?'font-weight:600;color:#7CF0B0':'color:#9BA8A3')+'">'+v+'</span><div style="width:100%;height:'+Math.max(4,v/dmx*64)+'px;border-radius:8px;background:'+(i===di?'#3DDC84':'#2C3833')+'"></div></div>';dl+='<span>'+DN[i]+'</span>'});
+  return '<div class="glow" style="top:-160px;left:-90px;background:radial-gradient(closest-side,rgba(96,165,250,.18),rgba(96,165,250,0) 70%)"></div>'+
+  '<div style="display:flex;flex-direction:column;gap:12px">'+titulo('Números')+seg2('numeros','Modelos','Ano')+'</div>'+
+  '<div class="hero"><span class="lbl">DE ONDE VEM O LUCRO</span><span class="big">'+eur(tot)+'</span><span style="font-size:13px" class="muted">Lucro de '+S.hoje.getFullYear()+' · '+its.length+' vendas</span>'+
+    '<div role="img" aria-label="Lucro por modelo" style="display:flex;gap:3px;height:12px;margin-top:12px">'+bar+'</div><div class="g2" style="gap:8px 12px;margin-top:8px">'+leg+'</div></div>'+
+  '<div class="card" style="display:flex;flex-direction:column;gap:10px"><span class="h2">Lucro por modelo</span><div style="display:flex;flex-direction:column"><div class="r3" style="border:0;padding:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.8px;color:#7E8B86"><span>MODELO · VENDAS</span><span style="text-align:right">POR VENDA</span><span style="text-align:right">RETORNO</span></div>'+rows+'</div>'+
+    '<span style="font-size:12px;line-height:1.5" class="muted">Retorno = lucro ÷ o que pagaste, peças incluídas.'+(fracos?' '+fracos+(fracos===1?' venda ficou':' vendas ficaram')+' abaixo de 20 € de lucro.':'')+'</span></div>'+
+  (ins?'<div class="g2">'+ins+'</div>':'')+
+  '<div class="card" style="display:flex;flex-direction:column;gap:12px"><div class="hdr"><span class="h2">Quando compras</span><span style="font-size:12px" class="muted">'+(DATA.compras||[]).length+' compras</span></div>'+
+    '<span style="font-size:14px;color:#C9D3CF"><b style="color:#3DDC84">'+DL[di]+'</b> é o teu dia mais forte</span>'+
+    '<div role="img" aria-label="Compras por dia da semana" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end">'+db+'</div>'+
+    '<div aria-hidden="true" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;text-align:center;font-size:11px;color:#7E8B86;margin-top:-6px">'+dl+'</div></div>';
+}
+
+// ---------- NÚMEROS: ANO ----------
+function setMeta(v){UI.meta=v;try{localStorage.setItem('meta',v)}catch(e){}show(true)}
+function ano(S){
+  var its=(DATA.itens||[]).filter(function(x){return x.v>0}),tot=soma(its,function(x){return x.l}),fat=soma(its,function(x){return x.v}),nV=its.length;
+  var Y=S.hoje.getFullYear(),cm=S.hoje.getMonth(),L=[];
+  for(var i=0;i<=cm;i++){var k=Y+'-'+pad(i+1);L.push(soma(its.filter(function(x){return x.m===k}),function(x){return x.l}))}
+  var prev=S.prev.total,meta=UI.meta,mx=Math.max.apply(null,L.concat([prev,meta]))*1.08,H=160,cols='',labs='',acima=[];
+  L.forEach(function(v,i){var last=i===cm,h=Math.max(4,v/mx*H);
+    if(!last&&v>=meta)acima.push(MESES[i]);
+    if(last){var hp=Math.max(h,prev/mx*H);cols+='<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:10px;font-weight:700;color:#7CF0B0;white-space:nowrap">~'+eur(prev,0).replace(' €','')+'</span><div style="width:100%;display:flex;flex-direction:column">'+(hp>h?'<div style="height:'+(hp-h)+'px;border:1.5px dashed rgba(61,220,132,.75);border-bottom:0;border-radius:6px 6px 0 0"></div>':'')+'<div style="height:'+h+'px;border-radius:'+(hp>h?'0 0 6px 6px':'6px')+';background:#3DDC84"></div></div></div>'}
+    else cols+='<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:10px;font-weight:600;color:'+(v>=meta?'#FCD34D':'#9BA8A3')+';white-space:nowrap">'+eur(v,0).replace(' €','')+'</span><div style="width:100%;height:'+h+'px;border-radius:6px;background:'+(v>=meta?'linear-gradient(180deg,#FCD34D,#D97706)':'#2C3833')+'"></div></div>';
+    labs+='<span'+(last?' style="font-weight:700;color:#7CF0B0"':'')+'>'+MESES[i].charAt(0).toUpperCase()+'</span>'});
+  var ly=meta/mx*H;
+  var mt=acima.length===0?'Com '+eur(meta,0)+' por mês, ainda nenhum mês fechado lá chegou.':acima.length===1?'Com '+eur(meta,0)+' por mês, só '+acima[0]+' passou a meta.':'Com '+eur(meta,0)+' por mês, passaste a meta em '+acima.length+' meses: '+acima.join(', ')+'.';
+  var chips=[500,1000,1500,2000].map(function(v){var on=v===meta;return '<button type="button" class="pill gold'+(on?' on':'')+'" aria-pressed="'+on+'" onclick="setMeta('+v+')">'+eur(v,0)+'</button>'}).join('');
+  var dac=nV>=30||fat>=2000, rec=Math.floor(tot/1000)*50, falta=1000-(tot%1000);
+  return '<div class="glow" style="top:-140px;left:-60px;background:radial-gradient(closest-side,rgba(61,220,132,.2),rgba(61,220,132,0) 70%)"></div>'+
+  '<div style="display:flex;flex-direction:column;gap:12px">'+titulo('Números')+seg2('ano','Modelos','Ano')+'</div>'+
+  '<div class="hero"><span class="lbl">LUCRO EM '+Y+'</span><span class="big">'+eur(tot)+'</span><span style="font-size:13px;color:#C9D3CF">'+nV+' vendas · '+eur(fat,0)+' faturados</span><span style="font-size:13px" class="muted">Média de '+eur(tot/(cm+1),0)+' por mês · por mês de compra</span>'+
+    '<div role="img" aria-label="Lucro por mês" style="position:relative;height:'+(H+36)+'px;margin-top:16px;display:grid;grid-template-columns:repeat('+(cm+1)+',minmax(0,1fr));gap:6px;align-items:end">'+
+      '<div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:'+ly+'px;border-top:1.5px dashed rgba(251,191,36,.6);pointer-events:none"></div><span aria-hidden="true" style="position:absolute;left:41%;bottom:'+(ly+4)+'px;font-size:11px;font-weight:600;color:#FBBF24;white-space:nowrap">meta '+eur(meta,0)+'</span>'+cols+'</div>'+
+    '<div aria-hidden="true" style="display:grid;grid-template-columns:repeat('+(cm+1)+',minmax(0,1fr));gap:6px;text-align:center;font-size:11px;color:#7E8B86">'+labs+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px"><span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#C9D3CF"><span style="width:10px;height:10px;border-radius:3px;background:#FBBF24"></span>meta cumprida</span><span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#C9D3CF"><span style="width:10px;height:10px;border-radius:3px;background:#3DDC84"></span>este mês, já feito</span><span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#C9D3CF"><span style="width:10px;height:10px;border-radius:3px;border:1.5px dashed #3DDC84"></span>previsão</span></div></div>'+
+  '<div class="card" style="display:flex;flex-direction:column;gap:14px"><div class="hdr"><span class="h2">Meta mensal</span><span style="font-size:12px" class="muted">escolhes tu</span></div><div role="group" aria-label="Meta mensal" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">'+chips+'</div>'+
+    '<span style="font-size:13px;line-height:1.5;color:#C9D3CF">'+mt+' '+MESES[cm].charAt(0).toUpperCase()+MESES[cm].slice(1)+' vai a caminho de ~'+eur(prev,0)+' se venderes o que compraste.</span></div>'+
+  '<div class="card" style="display:flex;flex-direction:column;gap:14px;border-color:rgba(251,146,60,.35)"><div style="display:flex;align-items:center;gap:12px"><div style="width:44px;height:44px;border-radius:14px;background:rgba(251,146,60,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(I.doc,'#FB923C',22)+'</div><div style="display:flex;flex-direction:column;gap:2px"><span class="h2">Finanças · DAC7</span><span style="font-size:12px" class="muted">Vendas em plataformas comunicadas às Finanças</span></div></div>'+
+    '<div style="display:flex;flex-direction:column;gap:6px"><div class="hdr"><span style="font-size:13px;color:#C9D3CF">Vendas em '+Y+'</span><span style="font-size:13px;font-weight:600">'+nV+' <span style="font-weight:400" class="muted">· limite 30</span></span></div><div style="height:8px;border-radius:99px;background:#1A2321"><div style="width:'+Math.min(100,nV/30*100)+'%;height:8px;border-radius:99px;background:#FB923C"></div></div></div>'+
+    '<div style="display:flex;flex-direction:column;gap:6px"><div class="hdr"><span style="font-size:13px;color:#C9D3CF">Faturação em '+Y+'</span><span style="font-size:13px;font-weight:600">'+eur(fat,0)+' <span style="font-weight:400" class="muted">· limite 2 000 €</span></span></div><div style="height:8px;border-radius:99px;background:#1A2321"><div style="width:'+Math.min(100,fat/2000*100)+'%;height:8px;border-radius:99px;background:#FB923C"></div></div></div>'+
+    '<span style="font-size:14px;line-height:1.5">'+(dac?'Passaste os limites: o Vinted vai comunicar as tuas vendas de '+Y+' às Finanças no início de '+(Y+1)+'.':'Ainda estás abaixo dos dois limites.')+'</span>'+
+    '<span style="font-size:13px;line-height:1.5" class="muted">Comprar para revender costuma contar como atividade. Confirma com um contabilista o que tens de declarar.</span>'+
+    '<button type="button" onclick="exportCSV()" class="btn" style="min-height:48px;border:1px solid rgba(61,220,132,.45);background:rgba(61,220,132,.08);color:#7CF0B0;font-size:14px;font-family:Inter,sans-serif">'+ico(I.down,'#7CF0B0',18,2.2)+'Exportar para o contabilista (CSV)</button>'+
+    '<span style="font-size:11px;color:#7E8B86">Informação, não é aconselhamento fiscal.</span></div>'+
+  '<div style="border-radius:24px;padding:18px;background:linear-gradient(160deg,#2A1F0C 0%,#141210 70%);border:1px solid #3A2C14;display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:10px">'+ico(I.gift,'#FBBF24',24)+'<span class="h2">A tua regra</span></div>'+
+    '<span style="font-size:13px;color:#D9C9B0">Por cada 1 000 € de lucro, 50 € para gastares em ti.</span><div style="display:flex;align-items:baseline;gap:8px"><span class="sora" style="font-weight:800;font-size:34px;letter-spacing:-1px;color:#FCD34D">'+eur(rec,0)+'</span><span style="font-size:13px;color:#D9C9B0">desbloqueados em '+Y+'</span></div>'+
+    '<div style="height:8px;border-radius:99px;background:#3A2C14;overflow:hidden"><div style="width:'+((tot%1000)/10)+'%;height:8px;border-radius:99px;background:#FBBF24"></div></div><span style="font-size:12px;color:#C7B79E">Faltam '+eur(falta,0)+' de lucro para os próximos 50 €.</span></div>';
+}
+function exportCSV(){
+  var f=function(n){return (Math.round((n||0)*100)/100).toFixed(2).replace('.',',')};
+  var L=['Mês;REF;Produto;Estado;Dia da compra;Custo total;Peças;Venda;Lucro'];
+  (DATA.itens||[]).forEach(function(x){L.push([x.m,x.r,'"'+String(x.p).replace(/"/g,'""')+'"',x.e,x.d,f(x.c),f(x.pc),x.v>0?f(x.v):'',x.v>0?f(x.l):''].join(';'))});
+  var b=new Blob(['﻿'+L.join('\n')],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download='vinted-'+(DATA.agora||'').slice(0,10)+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(a.href)},2000);
+}
+
+// ---------- RESUMO DA SEMANA ----------
+function semana(S){
+  var m0=seg(S.hoje),ini=add(m0,-7),I0=iso(ini),I1=iso(add(m0,-1)),lm=lmGeral();
+  var its=(DATA.itens||[]).filter(function(x){return x.d&&x.d>=I0&&x.d<=I1});
+  var cnt={};(DATA.compras||[]).forEach(function(c){cnt[c.d]=(cnt[c.d]||0)+1});
+  var dias=[],dmx=1,nC=0;for(var i=0;i<7;i++){var q=cnt[iso(add(ini,i))]||0;dias.push(q);nC+=q;if(q>dmx)dmx=q}
+  var ant=0;for(var j=0;j<7;j++)ant+=cnt[iso(add(ini,j-7))]||0;
+  var inv=soma(its,function(x){return x.c}),prevs=its.map(function(x){return {x:x,p:lucroPrev(x,lm)}}),pt=soma(prevs,function(o){return o.p});
+  var ent=its.filter(function(x){return x.v>0||/^(entregue|por enviar)$/i.test(x.e)}).length,cheg=its.filter(function(x){return !(x.v>0)&&!/pe[çc]as/i.test(x.e)&&/enviado|espera|levantar/i.test(x.e)}).length;
+  prevs.sort(function(a,b){return b.p-a.p});var best=prevs[0],worst=prevs[prevs.length-1];
+  var ssAnt=S.ss-(S.wk>=META?1:0),ok=nC>=META;
+  var LET=['S','T','Q','Q','S','S','D'],bars='',lb='';
+  dias.forEach(function(v,i){bars+='<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:12px;font-weight:600">'+v+'</span><div style="width:100%;height:'+Math.max(6,v/dmx*64)+'px;border-radius:8px;background:'+(v?'#3DDC84':'#26302D')+'"></div></div>';lb+='<span>'+LET[i]+'</span>'});
+  // foco
+  var foco=[],casa=S.parados.filter(function(o){return !o.venda&&!/pe[çc]as/i.test(o.x.e)&&o.dias>=14})[0],venda=S.parados.filter(function(o){return o.venda&&o.dias>=14})[0];
+  if(casa)foco.push(['Pôr à venda o '+casa.x.r,esc(casa.x.p)+' · '+casa.dias+' dias desde a compra','#a/'+encodeURIComponent(casa.x.r)]);
+  if(venda)foco.push(['Rever o preço do '+venda.x.r,esc(venda.x.p)+' · à venda, '+venda.dias+' dias desde a compra','#a/'+encodeURIComponent(venda.x.r)]);
+  var G=grupos(),lim=[];G.filter(function(g){return g.n>=8}).slice(0,2).forEach(function(g){lim.push(esc(curto(g.nome))+' até '+eur(limite(g,40),0))});
+  foco.push([META+' compras dentro do limite',lim.length?lim.join(' · ')+' (para +40 €)':'Usa o separador Comprar antes de oferecer','#comprar']);
+  var chk={};try{chk=JSON.parse(localStorage.getItem('foco-'+I0))||{}}catch(e){}
+  var fh='';foco.forEach(function(f,i){fh+='<div style="display:flex;gap:12px;align-items:flex-start;min-height:44px"><input type="checkbox" id="f'+i+'" '+(chk[i]?'checked ':'')+'onchange="marcaFoco(\''+I0+'\','+i+',this.checked)" style="width:22px;height:22px;margin:1px 0 0;accent-color:#3DDC84;flex-shrink:0"><label for="f'+i+'" style="display:flex;flex-direction:column;gap:2px;flex:1"><span style="font-size:14px;font-weight:600">'+f[0]+'</span><span style="font-size:12px" class="muted">'+f[1]+'</span></label><a href="'+f[2]+'" aria-label="Abrir" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center">'+ico(I.arrow,'#7E8B86',16)+'</a></div>'});
+  var dd=function(d){return d.getDate()+' de '+MESES[d.getMonth()]};
+  return '<div class="glow" style="top:-150px;left:-70px;background:radial-gradient(closest-side,rgba(251,191,36,.16),rgba(251,191,36,0) 70%)"></div>'+
+  '<div class="top"><a href="#" class="back" aria-label="Voltar ao início">'+ico(I.back,'#EEF2F0',20,2.2)+'</a><h1 class="sora" style="font-weight:700;font-size:18px">Resumo da semana</h1><span style="width:44px"></span></div>'+
+  '<span style="align-self:center;padding:6px 14px;border-radius:999px;background:#111615;border:1px solid #1E2826;font-size:13px;font-weight:600;color:#C9D3CF">'+ini.getDate()+' a '+dd(add(m0,-1))+'</span>'+
+  '<div class="hero"><span class="lbl">COMPRAS DA SEMANA</span><div style="display:flex;align-items:baseline;gap:6px"><span class="sora" style="font-weight:800;font-size:56px;letter-spacing:-2px;line-height:1">'+nC+'</span><span class="sora muted" style="font-weight:700;font-size:24px">/ '+META+'</span></div>'+
+    '<div class="hdr"><span style="font-size:15px;font-weight:600;color:'+(ok?'#3DDC84':'#FBBF24')+'">'+(ok?'Meta cumprida'+(nC>META?' · +'+(nC-META):''):'Faltaram '+(META-nC))+'</span><span style="font-size:12px" class="muted">semana anterior: '+ant+'</span></div>'+
+    '<div role="img" aria-label="Compras por dia" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;margin-top:14px">'+bars+'</div><div aria-hidden="true" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;text-align:center;font-size:11px;color:#7E8B86;margin-top:2px">'+lb+'</div></div>'+
+  '<div style="border-radius:22px;padding:16px;background:linear-gradient(160deg,#2A1A0C 0%,#141110 70%);border:1px solid #3A2614;display:flex;align-items:center;gap:14px">'+ico(I.fire,'#FB923C',30)+'<span class="sora" style="font-weight:800;font-size:30px;letter-spacing:-1px">'+ssAnt+'</span><span style="font-size:13px;color:#C9B8A8">'+(ssAnt===1?'semana na meta':'semanas seguidas na meta')+'</span></div>'+
+  '<div class="card" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px">'+
+    '<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px" class="muted">Investido</span><span class="sora" style="font-weight:700;font-size:20px">'+eur(inv)+'</span></div>'+
+    '<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px" class="muted">Lucro previsto</span><span class="sora" style="font-weight:700;font-size:20px;color:#3DDC84">≈ '+eur(pt,0)+'</span></div>'+
+    '<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px" class="muted">Já vendidos</span><span class="sora" style="font-weight:700;font-size:20px;color:#D8B4FE">'+ent+'</span></div>'+
+    '<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px" class="muted">A chegar</span><span class="sora" style="font-weight:700;font-size:20px;color:#93C5FD">'+cheg+'</span></div></div>'+
+  (best?'<div class="card" style="display:flex;flex-direction:column;gap:12px">'+
+    '<a href="#a/'+encodeURIComponent(best.x.r)+'" style="display:flex;align-items:center;gap:12px"><div style="width:44px;height:44px;border-radius:14px;background:rgba(61,220,132,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(I.up,'#3DDC84',22)+'</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px" class="muted">Melhor compra</span><span style="font-size:14px;font-weight:600">'+esc(best.x.r)+' · '+esc(best.x.p)+'</span><span style="font-size:12px" class="muted">custou '+eur(best.x.c)+'</span></div><span class="sora" style="font-weight:700;font-size:18px;color:#3DDC84">~+'+eur(best.p,0)+'</span></a>'+
+    (worst&&worst!==best?'<div style="height:1px;background:#1A2321"></div><a href="#a/'+encodeURIComponent(worst.x.r)+'" style="display:flex;align-items:center;gap:12px"><div style="width:44px;height:44px;border-radius:14px;background:rgba(251,146,60,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(I.dn,'#FB923C',22)+'</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px" class="muted">Mais apertada</span><span style="font-size:14px;font-weight:600">'+esc(worst.x.r)+' · '+esc(worst.x.p)+'</span><span style="font-size:12px" class="muted">custou '+eur(worst.x.c)+'</span></div><span class="sora" style="font-weight:700;font-size:18px;color:#FB923C">~'+(worst.p<0?'':'+')+eur(worst.p,0)+'</span></a>':'')+'</div>':'')+
+  '<div class="card" style="display:flex;flex-direction:column;gap:8px"><span class="h2" style="margin-bottom:4px">Para esta semana</span>'+fh+'</div>';
+}
+function marcaFoco(w,i,v){var c={};try{c=JSON.parse(localStorage.getItem('foco-'+w))||{}}catch(e){}c[i]=v;try{localStorage.setItem('foco-'+w,JSON.stringify(c))}catch(e){}}
+
+// ---------- FICHA DO ARTIGO ----------
+var ART=null;
+var EST=[['Recebido','Em casa','#FCD34D','251,191,36'],['À espera de peças','Peças encomendadas ou a encomendar','#FDBA74','251,146,60'],['À venda','Anunciado no Vinted','#7CF0B0','61,220,132']];
+function corEstado(e){e=String(e).toLowerCase();if(/pe[çc]as/.test(e))return EST[1];if(/venda/.test(e)&&!/vendido/.test(e))return EST[2];if(/recebido/.test(e))return EST[0];
+  if(/entregue|por enviar|vendido/.test(e))return [null,null,'#D8B4FE','192,132,252'];return [null,null,'#93C5FD','96,165,250']}
+function artigo(S,ref){
+  var x=(DATA.itens||[]).filter(function(i){return i.r===ref})[0];
+  var top='<div class="top"><a href="#stock" class="back" aria-label="Voltar ao stock">'+ico(I.back,'#EEF2F0',20,2.2)+'</a><span class="sora" style="font-weight:700;font-size:18px">'+esc(ref)+'</span><span style="width:44px"></span></div>';
+  if(!x)return top+'<div class="card">Não encontrei este artigo.</div>';
+  var editavel=EST.some(function(s){return s[0]===x.e});
+  if(UI.e===null||ART!==ref){UI.e=x.e;ART=ref;UI.apc=null;UI.apv=null}
+  var vend=x.v>0||/^(entregue|por enviar)$/i.test(x.e), dias=x.d?Math.round((S.hoje-parse(x.d))/864e5):null, ce=corEstado(x.e);
+  var precoV=LP[ref]!=null?LP[ref]:(x.v>0?x.v:(x.pv||temPreco(x)||''));
+  var pago=x.c-(x.pc||0);
+  var aging=(!vend&&dias!==null)?'<div style="display:flex;flex-direction:column;gap:8px"><div class="hdr"><span style="font-size:14px;font-weight:600">'+dias+' dias desde a compra</span><span style="font-size:12px;font-weight:600;color:'+(dias>21?'#F87171':dias>=14?'#FB923C':'#3DDC84')+'">'+(dias>21?'rever já':dias>=14?'atenção':'tudo bem')+'</span></div>'+
+    '<div role="img" aria-label="'+dias+' dias" style="position:relative;display:flex;gap:3px;height:8px"><div style="flex:14;border-radius:99px;background:rgba(61,220,132,.35)"></div><div style="flex:7;border-radius:99px;background:rgba(251,146,60,.45)"></div><div style="flex:9;border-radius:99px;background:rgba(248,113,113,.45)"></div><div style="position:absolute;left:'+Math.min(100,dias/30*100)+'%;top:-4px;width:4px;height:16px;margin-left:-2px;border-radius:2px;background:#F4FFF8"></div></div>'+
+    '<div aria-hidden="true" style="display:flex;font-size:11px;color:#7E8B86"><span style="flex:14">0</span><span style="flex:7">14</span><span style="flex:9;display:flex;justify-content:space-between"><span>21</span><span>30+ dias</span></span></div></div>':'';
+  var estHtml='';
+  if(editavel){EST.forEach(function(s){var on=UI.e===s[0];
+    estHtml+='<button type="button" aria-pressed="'+on+'" data-e="'+esc(s[0])+'" onclick="UI.e=this.getAttribute(\'data-e\');show(true)" style="min-height:56px;display:flex;align-items:center;gap:14px;padding:6px 4px;border:0;background:transparent;text-align:left;font-family:Inter,sans-serif;color:#EEF2F0">'+
+      (on?'<span style="width:36px;height:36px;border-radius:99px;background:'+s[2]+';box-shadow:0 0 0 5px rgba(238,242,240,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="width:10px;height:10px;border-radius:99px;background:#07090A"></span></span>':'<span style="width:36px;height:36px;border-radius:99px;background:#0C1110;border:2px solid #2A3532;flex-shrink:0"></span>')+
+      '<span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600;color:'+(on?'#F4FFF8':'#C9D3CF')+'">'+s[0]+'</span><span style="font-size:12px" class="muted">'+s[1]+'</span></span></button>'})}
+  return '<div class="glow" style="top:-160px;right:-120px;background:radial-gradient(closest-side,rgba('+ce[3]+',.16),rgba(0,0,0,0) 70%)"></div>'+top+
+  '<div class="hero" style="gap:14px"><div style="display:flex;align-items:center;gap:14px"><div style="width:56px;height:56px;border-radius:16px;background:#1A2321;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(I.phone,'#9BA8A3',26,1.8)+'</div>'+
+    '<div style="display:flex;flex-direction:column;gap:2px"><h1 class="sora" style="font-weight:700;font-size:24px;letter-spacing:-.5px">'+esc(x.p)+'</h1><span style="font-size:13px" class="muted">'+(x.d?'Comprado a '+parse(x.d).getDate()+' '+MESES[parse(x.d).getMonth()].slice(0,3)+' · ':'')+eur(pago)+'</span></div></div>'+
+    '<span style="align-self:flex-start;padding:7px 12px;border-radius:999px;font-size:13px;font-weight:600;color:'+ce[2]+';background:rgba('+ce[3]+',.12);border:1px solid rgba('+ce[3]+',.45)">'+esc(x.e)+'</span>'+aging+'</div>'+
+  '<div class="card" style="display:flex;flex-direction:column;gap:12px"><span class="h2">Contas deste artigo</span><div class="g2" style="gap:10px">'+
+    '<div class="tile"><span style="font-size:12px" class="muted">Pagaste</span><span class="sora" style="font-weight:700;font-size:20px;min-height:44px;display:flex;align-items:center">'+eur(pago)+'</span></div>'+
+    '<div class="tile"><label for="pc" style="font-size:12px" class="muted">Peças</label><div style="display:flex;align-items:center;gap:6px"><input id="pc" class="inp" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="'+esc(UI.apc!=null?UI.apc:(x.pc?String(x.pc).replace('.',','):''))+'" oninput="updArt()"'+(vend?' disabled':'')+'><span class="muted">€</span></div></div>'+
+    '<div class="tile"><label for="pv" style="font-size:12px" class="muted">'+(x.v>0?'Vendeste por':'Vais vender por')+'</label><div style="display:flex;align-items:center;gap:6px"><input id="pv" class="inp" type="text" inputmode="decimal" autocomplete="off" value="'+esc(UI.apv!=null?UI.apv:String(precoV).replace('.',','))+'" oninput="updArt()"'+(x.v>0?' disabled':'')+'><span class="muted">€</span></div></div>'+
+    '<div class="tile" style="background:rgba(61,220,132,.08);border-color:rgba(61,220,132,.3)"><span style="font-size:12px;color:#7CF0B0">'+(x.v>0&&!/^(entregue|por enviar)$/i.test(x.e)?'Lucro':'Lucro previsto')+'</span><span id="al" class="sora" style="font-weight:800;font-size:22px;color:#3DDC84"></span></div></div></div>'+
+  (editavel?'<div class="card" style="display:flex;flex-direction:column;gap:4px"><div class="hdr"><span class="h2">Estado</span><span style="font-size:12px" class="muted">toca para mudar</span></div>'+estHtml+'</div>':
+    '<div class="note">'+ico(I.warn,'#7E8B86',18)+'<span style="font-size:13px;line-height:1.45;color:#C9D3CF">'+(vend?'Este artigo já foi vendido: o estado muda sozinho com os emails do Vinted.':'Este artigo ainda vem a caminho: o estado muda sozinho com os emails do Vinted.')+'</span></div>')+
+  (!vend&&dias>21&&editavel&&x.e!=='À venda'?'<div class="note">'+ico(I.warn,'#FBBF24',18)+'<span style="font-size:13px;line-height:1.45;color:#C9D3CF">'+dias+' dias e ainda não está à venda. Se as peças ainda não chegaram, decide esta semana: arranjar ou vender como está.</span></div>':'')+
+  (!vend||x.v===0?'<button type="button" id="gd" onclick="guardarArt()" class="btn" style="border:0;background:#3DDC84;color:#06210F;font-family:Inter,sans-serif;width:100%">Guardar</button><span id="gm" role="status" style="text-align:center;font-size:13px;font-weight:600;color:#7CF0B0;min-height:18px"></span>':'');
+}
+function updArt(){var x=(DATA.itens||[]).filter(function(i){return i.r===ART})[0],el=document.getElementById('al');if(!x||!el)return;
+  var pc=document.getElementById('pc'),pv=document.getElementById('pv'),pcs=num(pc&&pc.value)||0,v=num(pv&&pv.value);if(pc&&!pc.disabled)UI.apc=pc.value;if(pv&&!pv.disabled)UI.apv=pv.value;
+  if(x.v>0&&!/^(entregue|por enviar)$/i.test(x.e)){el.textContent=(x.l<0?'':'+')+eur(x.l);return}
+  if(v==null){el.textContent='—';return}var l=v-(x.c-(x.pc||0))-pcs;el.textContent=(l<0?'':'+')+eur(l)}
+function guardarArt(){var x=(DATA.itens||[]).filter(function(i){return i.r===ART})[0];if(!x)return;
+  var b=document.getElementById('gd'),m=document.getElementById('gm'),pc=document.getElementById('pc'),pv=document.getElementById('pv');
+  var v=num(pv&&pv.value);if(v!=null&&!(x.v>0)){LP[x.r]=v;try{localStorage.setItem('precos',JSON.stringify(LP))}catch(e){}}
+  var q='&f=set&ref='+encodeURIComponent(x.r),mud=false;
+  if(UI.e&&UI.e!==x.e&&EST.some(function(s){return s[0]===UI.e})){q+='&e='+encodeURIComponent(UI.e);mud=true}
+  var p=pc&&!pc.disabled?num(pc.value):null;if(p!=null&&Math.abs(p-(x.pc||0))>0.004){q+='&pc='+p;mud=true}
+  if(!mud){m.textContent='Guardado';return}
+  b.disabled=true;b.textContent='A guardar…';
+  fetch(API+'?k='+encodeURIComponent(K)+q).then(function(r){return r.json()}).then(function(d){
+    if(d.ok){m.textContent='Guardado na folha';b.textContent='Guardar';b.disabled=false;UI.e=null;ART=null;load()}else{m.style.color='#FCA5A5';m.textContent='Não deu: '+(d.erro||'erro');b.textContent='Guardar';b.disabled=false}
+  }).catch(function(){m.style.color='#FCA5A5';m.textContent='Sem ligação. Tenta outra vez.';b.textContent='Guardar';b.disabled=false});
+}
+
+// ---------- PESQUISA (Stock) ----------
+function pesquisaHTML(){return '<div style="display:flex;align-items:center;gap:10px;min-height:48px;border-radius:16px;background:#111615;border:1px solid #1E2826;padding:0 14px">'+ico(I.search,'#7E8B86',18)+'<label for="q" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Procurar</label><input id="q" type="search" autocomplete="off" placeholder="Procurar REF ou modelo" oninput="procura(this.value)" style="flex:1;min-width:0;min-height:44px;background:transparent;border:0;color:#EEF2F0;font:500 15px Inter,sans-serif"></div><div id="qr" style="display:flex;flex-direction:column;gap:8px"></div>'}
+function procura(q){var el=document.getElementById('qr');if(!el)return;q=String(q).trim().toLowerCase();if(!q){el.innerHTML='';return}
+  var r=(DATA.itens||[]).filter(function(x){return (x.r+' '+x.p).toLowerCase().indexOf(q)>=0||x.r.replace(/\D/g,'')===q.replace(/\D/g,'')&&q.replace(/\D/g,'')}).slice(-12).reverse();
+  el.innerHTML=r.length?r.map(function(x){var ce=corEstado(x.e);return '<a href="#a/'+encodeURIComponent(x.r)+'" style="border-radius:16px;padding:12px 14px;background:#111615;border:1px solid #1E2826;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:52px"><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:14px;font-weight:600">'+esc(x.p)+' <span class="muted" style="font-weight:500;font-size:12px">'+esc(x.r)+'</span></span><span style="font-size:12px;color:'+ce[2]+'">'+esc(x.e)+'</span></span><span class="sora" style="font-weight:700;font-size:14px;white-space:nowrap">'+(x.v>0?(x.l<0?'':'+')+eur(x.l,0):eur(x.c,0))+'</span></a>'}).join(''):'<span style="font-size:13px" class="muted">Nada encontrado.</span>'}
+
+// ---------- SEPARADORES + ROUTER ----------
+function tabs(h){var a=h===''||h==='semana'?'':h==='ano'?'numeros':h.indexOf('a/')===0?'stock':h;
+  var T=[['','Início',I.home],['stock','Stock',I.box],['comprar','Comprar',I.tag],['numeros','Números',I.chart],['nivel','Nível',I.star]];
+  return '<nav class="tabs" aria-label="Menu principal"><div>'+T.map(function(t){var on=t[0]===a;return '<a href="#'+t[0]+'"'+(on?' aria-current="page"':'')+' class="tb'+(on?' on':'')+'">'+ico(t[2],'currentColor',22)+t[1]+'</a>'}).join('')+'</div></nav>'}
+function show(keep){
+  if(!DATA) return;
+  var S=calc(DATA), h=decodeURIComponent((location.hash||'').replace('#','')), html;
+  if(h==='stock')html=stock(S);else if(h==='nivel')html=nivel(S);else if(h==='comprar')html=comprar(S);else if(h==='numeros')html=numeros(S);
+  else if(h==='ano')html=ano(S);else if(h==='semana')html=semana(S);else if(h.indexOf('a/')===0)html=artigo(S,h.slice(2));else html=inicio(S);
+  document.getElementById('app').innerHTML='<div class="wrap">'+html+'<footer><button type="button" class="upd" onclick="this.textContent=\'A atualizar…\';load()">Atualizado às '+DATA.agora.slice(11,16)+' · tocar para atualizar</button></footer></div>'+tabs(h);
+  if(!keep) window.scrollTo(0,0);
+  if(h==='comprar')updOf();if(h.indexOf('a/')===0)updArt();
+}
+
+window.addEventListener('hashchange',function(){show()});
 var app=document.getElementById('app');
 try{var c0=JSON.parse(localStorage.getItem('d'));if(c0&&c0.itens){DATA=c0;show()}}catch(e){}
 if(!DATA) app.innerHTML='<div class="wrap"><footer style="padding:60px 0">A carregar…</footer></div>';
@@ -245,7 +526,7 @@ function load(){
   fetch(API+'?f=json&k='+encodeURIComponent(K)).then(function(r){return r.json()}).then(function(d){
     if(d.erro){app.innerHTML='<div class="wrap"><footer style="padding:60px 0">Sem acesso. Confirma o link.</footer></div>';return}
     try{localStorage.setItem('d',JSON.stringify(d))}catch(e){}
-    DATA=d; var y=window.scrollY; show(); window.scrollTo(0,y);
+    DATA=d; if(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName))return; var y=window.scrollY; show(true); window.scrollTo(0,y);
   }).catch(function(){});
 }
 load();
