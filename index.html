@@ -114,12 +114,12 @@ function mesHTML(D,hoje){
     '<div class="r"><span>Lucro médio por venda</span><b>'+(c.v.length?eur(c.lucro/c.v.length):'—')+'</b></div>'+
     '<div class="r"><span>Melhor venda</span><b class="g">'+(best?best.p+' · +'+eur(best.l):'—')+'</b></div>'+
     '<div class="r"><span>Investido em compras</span><b>'+eur(c.inv)+'</b></div></div></section>';
-  var nv=D.itens.filter(function(x){return !(x.v>0)||/^entregue$/i.test(x.e)}), g={ch:0,ca:0,av:0,en:0};
-  nv.forEach(function(x){var e=x.e.toLowerCase(); if(/^entregue$/.test(e))g.en++; else if(/enviado|espera/.test(e))g.ch++; else if(/venda/.test(e))g.av++; else g.ca++});
+  var nv=D.itens.filter(function(x){return !(x.v>0)||/^entregue$/i.test(x.e)}), g={ch:0,ca:0,av:0,en:0,rec:0};
+  nv.forEach(function(x){var e=x.e.toLowerCase(); if(/^entregue$/.test(e)){g.en++;g.rec+=(x.v>0?x.v:(x.pv||0))} else if(/enviado|espera/.test(e))g.ch++; else if(/venda/.test(e))g.av++; else g.ca++});
   if(nv.length){var cost=nv.reduce(function(s,x){return s+x.c},0);
     h+='<section class="card"><div class="hd"><h2>Stock</h2><span><b>'+nv.length+'</b> · '+eur(cost)+'</span></div>'+
     '<div class="stock">'+(g.ch?'<i style="flex:'+g.ch+';background:#60A5FA"></i>':'')+(g.ca?'<i style="flex:'+g.ca+';background:#FBBF24"></i>':'')+(g.av?'<i style="flex:'+g.av+';background:#4ADE80"></i>':'')+(g.en?'<i style="flex:'+g.en+';background:#C084FC"></i>':'')+'</div>'+
-    '<div class="leg"><span><i style="background:#60A5FA"></i>A chegar '+g.ch+'</span><span><i style="background:#FBBF24"></i>Em casa '+g.ca+'</span><span><i style="background:#4ADE80"></i>À venda '+g.av+'</span><span><i style="background:#C084FC"></i>Entregues '+g.en+'</span></div></section>';}
+    '<div class="leg"><span><i style="background:#60A5FA"></i>A chegar '+g.ch+'</span><span><i style="background:#FBBF24"></i>Em casa '+g.ca+'</span><span><i style="background:#4ADE80"></i>À venda '+g.av+'</span><span><i style="background:#C084FC"></i>Entregues '+g.en+(g.rec?' · <b style="color:var(--ink)">'+eur(g.rec)+'</b> a receber':'')+'</span></div></section>';}
   return h;
 }
 function render(D){
