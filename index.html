@@ -47,8 +47,10 @@ var K=(location.search.match(/[?&]k=([^&]+)/)||[])[1];
 try{if(K)localStorage.setItem('k',K);else K=localStorage.getItem('k')}catch(e){}
 var META=7;
 // Preços de venda estimados por modelo (para a previsão). Modelos sem preço: custo + lucro médio do mês.
-var PRECOS={'iphone 11':95,'iphone xr':85,'macbook pro 2019':300};
-function precoEst(x,lm){var k=String(x.p).toLowerCase().replace(/\s+/g,' ').trim();return PRECOS[k]!=null?PRECOS[k]:x.c+lm}
+var PRECOS={'iphone 11':95,'iphone xr':85,'macbook pro 2019':300,'iphone 11 pro':120,'mac mini':90,'iphone 12':75,'iphone 12 pro':80};
+var PRECO_REF={'REF 825':100,'REF 843':200,'REF 848':200};
+function temPreco(x){var k=String(x.p).toLowerCase().replace(/\s+/g,' ').trim();return PRECO_REF[x.r]!=null?PRECO_REF[x.r]:(PRECOS[k]!=null?PRECOS[k]:null)}
+function precoEst(x,lm){var p=temPreco(x);return p!=null?p:x.c+lm}
 var MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 var SEM=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 var NIVEIS=[
@@ -113,9 +115,11 @@ function calc(D){
     cap:nv.reduce(function(s,x){return s+x.c},0), prev:prevCalc(c,c.lucro)};
 }
 function prevCalc(c){
-  var lm=c.v.length?c.lucro/c.v.length:40, feito=c.lucro, receber=0, stockL=0, nS=0, est=0;
-  c.a.forEach(function(x){ if(x.v>0) return; if(/^entregue$/i.test(x.e)&&x.pv>0){receber+=x.pv-x.c;return}
-    var pk=String(x.p).toLowerCase().replace(/\s+/g,' ').trim(); if(PRECOS[pk]==null) est++; stockL+=precoEst(x,lm)-x.c; nS++ });
+  var lm=c.v.length?c.lucro/c.v.length:40, feito=0, receber=0, stockL=0, nS=0, est=0;
+  c.a.forEach(function(x){ var ent=/^entregue$/i.test(x.e);
+    if(ent){var vv=x.v>0?x.v:(x.pv||0); if(vv>0){receber+=vv-x.c;return}}
+    if(x.v>0){feito+=x.l;return}
+    if(temPreco(x)==null) est++; stockL+=precoEst(x,lm)-x.c; nS++ });
   return {total:feito+receber+stockL, feito:feito, receber:receber, stock:stockL, nS:nS, est:est};
 }
 
