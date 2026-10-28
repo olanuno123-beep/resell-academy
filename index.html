@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Resell">
+<title>Resell Academy</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B0F0D">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B0F0D;--card:#131916;--card2:#18201C;--ink:#F2F5F3;--muted:#8A958F;--line:#232C27;--on:#4ADE80;--on2:#22C55E;--gold:#FBBF24;--fire:#FB923C}
+*{box-sizing:border-box;margin:0}
+html,body{background:var(--bg)}
+body{color:var(--ink);font:15px/1.4 Outfit,system-ui,-apple-system,sans-serif;padding:max(14px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:center;gap:10px;padding:4px 2px 6px}
+.logo{width:34px;height:34px;border-radius:10px;background:#0E1A14;display:grid;place-items:center;border:1px solid #1F3A2B}
+.brand{font-weight:800;font-size:1.08rem;letter-spacing:-.01em}
+.date{margin-left:auto;color:var(--muted);font-size:.85rem;text-transform:capitalize}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px}
+.hero{display:flex;flex-direction:column;align-items:center;padding:22px 18px 20px;background:radial-gradient(120% 80% at 50% 0%,var(--glow,transparent),transparent 70%),var(--card)}
+.ring{position:relative;width:190px;height:190px}
+.ring svg{transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .n{font-weight:800;font-size:4.2rem;line-height:1;letter-spacing:-.03em}
+.ring .l{color:var(--muted);font-size:.85rem;margin-top:4px}
+.status{margin-top:16px;font-weight:600;font-size:1rem}
+.status.ok{color:var(--on)}
+.status.no{color:var(--gold)}
+.sub{color:var(--muted);font-size:.82rem;margin-top:4px;text-align:center}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.stat .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none}
+.stat b{display:block;font-weight:800;font-size:1.5rem;line-height:1.1}
+.stat span{color:var(--muted);font-size:.78rem}
+.hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.hd h2{font-size:.95rem;font-weight:600}
+.hd span{color:var(--muted);font-size:.85rem}
+.hd span b{color:var(--ink);font-size:1.05rem}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:18px}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--on2),var(--on))}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:120px}
+.col{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.col .v{font-size:.75rem;font-weight:600;color:var(--ink);min-height:1em}
+.col .b{width:100%;max-width:30px;border-radius:9px;background:var(--line);min-height:8px}
+.col.on .b{background:linear-gradient(180deg,var(--on),var(--on2))}
+.col.today .b{outline:2px solid var(--ink);outline-offset:2px}
+.col.fut .b{opacity:.45}
+.col .d{color:var(--muted);font-size:.75rem}
+.col.today .d{color:var(--ink);font-weight:600}
+.hist{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end;height:130px}
+.hc{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.hc .v{font-size:.8rem;font-weight:600}
+.hc .b{width:100%;max-width:34px;border-radius:9px;background:#2C3631;min-height:6px}
+.hc.best .b{background:linear-gradient(180deg,var(--gold),#D97706)}
+.hc.best .v{color:var(--gold)}
+.hc .d{color:var(--muted);font-size:.7rem}
+footer{color:var(--muted);font-size:.75rem;text-align:center;padding-top:4px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+var API='https://script.google.com/macros/s/AKfycbxGgQQ56FQnRyI_j4GsTRYlJP9y42Ts1y--1hw29EF6D2jv8tETrpol9VHBfGPCAFbs/exec';
+var K=(location.search.match(/[?&]k=([^&]+)/)||[])[1];
+try{if(K)localStorage.setItem('k',K);else K=localStorage.getItem('k')}catch(e){}
+var PTS=2, META=14, LETRAS=['S','T','Q','Q','S','S','D'], SEM=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+var LOGO='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="6.5" width="6" height="11" rx="1.4"/><path d="M12 2.5a9.5 9.5 0 0 1 9.3 7.6M21.3 10.1l-2.4-.6M21.3 10.1l.6-2.4M12 21.5a9.5 9.5 0 0 1-9.3-7.6M2.7 13.9l2.4.6M2.7 13.9l-.6 2.4"/></svg>';
+var FIRE='<svg width="22" height="22" viewBox="0 0 24 24" fill="#FB923C"><path d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.6 0 2.4-1.3 2.2-3 2.3 1.8 4 4.4 4 7.2A7 7 0 0 1 12 23a7 7 0 0 1-7-6.8C5 11 10.5 8.5 12 2z"/></svg>';
+var STAR='<svg width="22" height="22" viewBox="0 0 24 24" fill="#FBBF24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>';
+function pad(n){return (n<10?'0':'')+n}
+function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function parse(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function add(d,n){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()+n);return x}
+function seg(d){return add(d,-((d.getDay()+6)%7))}
+function render(D){
+  var hoje=parse(D.agora.slice(0,10)), t=iso(hoje), cnt={};
+  D.compras.forEach(function(c){cnt[c.d]=(cnt[c.d]||0)+1});
+  var n=cnt[t]||0, s=0, d=n?hoje:add(hoje,-1);
+  while(cnt[iso(d)]){s++;d=add(d,-1)}
+  var m=seg(hoje), wk=0, ks=[], kmax=1;
+  for(var i=0;i<7;i++){var di=iso(add(m,i)), k=cnt[di]||0; ks.push({k:k,di:di}); if(di<=t) wk+=k; if(k>kmax) kmax=k}
+  var dias='';
+  ks.forEach(function(o,i){dias+='<div class="col'+(o.k?' on':'')+(o.di===t?' today':'')+(o.di>t?' fut':'')+'"><span class="v">'+(o.k?'+'+o.k*PTS:'')+'</span><div class="b" style="height:'+(o.k?Math.max(18,o.k/kmax*80):8)+'px"></div><span class="d">'+LETRAS[i]+'</span></div>'});
+  var pts=wk*PTS, rows=[], best=0;
+  for(var w=6;w>=1;w--){var mm=add(m,-7*w), q=0; for(var j=0;j<7;j++) q+=cnt[iso(add(mm,j))]||0; rows.push({m:mm,p:q*PTS}); if(q*PTS>best) best=q*PTS}
+  var hmax=Math.max(best,1), hist='';
+  rows.forEach(function(r){hist+='<div class="hc'+(r.p===best&&best>0?' best':'')+'"><span class="v">'+r.p+'</span><div class="b" style="height:'+(r.p/hmax*84+6)+'px"></div><span class="d">'+pad(r.m.getDate())+'/'+pad(r.m.getMonth()+1)+'</span></div>'});
+  var R=80, C=2*Math.PI*R, f=Math.min(1,n), ok=n>0;
+  var ring='<div class="ring"><svg width="190" height="190"><circle cx="95" cy="95" r="'+R+'" stroke="#232C27" stroke-width="14" fill="none"/>'+
+    '<circle cx="95" cy="95" r="'+R+'" stroke="'+(ok?'#4ADE80':'#FBBF24')+'" stroke-width="14" fill="none" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+(ok?0:C)+'" opacity="'+(ok?1:0)+'"/></svg>'+
+    '<div class="c"><span class="n">'+n+'</span><span class="l">'+(n===1?'compra hoje':'compras hoje')+'</span></div></div>';
+  document.getElementById('app').innerHTML=
+    '<div class="top"><div class="logo">'+LOGO+'</div><span class="brand">Resell Academy</span><span class="date">'+SEM[hoje.getDay()]+', '+pad(hoje.getDate())+'/'+pad(hoje.getMonth()+1)+'</span></div>'+
+    '<section class="card hero" style="--glow:'+(ok?'rgba(74,222,128,.16)':'rgba(251,191,36,.10)')+'">'+ring+
+      '<div class="status '+(ok?'ok':'no')+'">'+(ok?'Objetivo cumprido · +'+n*PTS+' pts':'Falta 1 compra')+'</div>'+
+      (!ok&&s>0?'<div class="sub">Compra hoje para manteres os '+s+' dias seguidos</div>':'')+'</section>'+
+    '<div class="row2"><div class="stat"><div class="ic" style="background:rgba(251,146,60,.12)">'+FIRE+'</div><div><b>'+s+'</b><span>'+(s===1?'dia seguido':'dias seguidos')+'</span></div></div>'+
+      '<div class="stat"><div class="ic" style="background:rgba(251,191,36,.12)">'+STAR+'</div><div><b>'+pts+'</b><span>pontos semana</span></div></div></div>'+
+    '<section class="card"><div class="hd"><h2>Esta semana</h2><span><b>'+pts+'</b> / '+META+' pts</span></div><div class="bar"><i style="width:'+Math.min(100,pts/META*100)+'%"></i></div><div class="week">'+dias+'</div></section>'+
+    '<section class="card"><div class="hd"><h2>Últimas semanas</h2><span>recorde <b style="color:var(--gold)">'+best+'</b></span></div><div class="hist">'+hist+'</div></section>'+
+    '<footer>Atualizado às '+D.agora.slice(11,16)+'</footer>';
+}
+var app=document.getElementById('app');
+try{var c=JSON.parse(localStorage.getItem('d'));if(c)render(c)}catch(e){}
+if(!app.innerHTML) app.innerHTML='<div class="top"><span class="brand">Resell Academy</span></div><footer style="padding:40px 0">A carregar…</footer>';
+function load(){
+  if(!K){app.innerHTML='<footer style="padding:40px 0">Falta o código de acesso no link.</footer>';return}
+  fetch(API+'?f=json&k='+encodeURIComponent(K)).then(function(r){return r.json()}).then(function(d){
+    if(d.erro){app.innerHTML='<footer style="padding:40px 0">Sem acesso. Confirma o link.</footer>';return}
+    try{localStorage.setItem('d',JSON.stringify(d))}catch(e){}
+    render(d);
+  }).catch(function(){});
+}
+load();
+setInterval(load,300000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)load()});
+</script>
+</body>
+</html>
