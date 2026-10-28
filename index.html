@@ -62,6 +62,24 @@ main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .hc.best .v{color:var(--gold)}
 .hc .d{color:var(--muted);font-size:.7rem}
 footer{color:var(--muted);font-size:.75rem;text-align:center;padding-top:4px}
+.m3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.m3 div{background:#18201C;border-radius:16px;padding:12px 6px;text-align:center}
+.m3 b{display:block;font-weight:800;font-size:1.4rem;line-height:1.1}
+.m3 span{color:var(--muted);font-size:.74rem}
+.m3 .g b{color:var(--on)}
+.lbar{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.lbar b{color:var(--ink)}
+.rows{border-top:1px solid var(--line);margin-top:4px}
+.r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.r:last-child{border-bottom:0}
+.r span{color:var(--muted)}
+.r b{font-weight:600;text-align:right}
+.r b.g{color:var(--on)}
+.stock{display:flex;height:10px;border-radius:99px;overflow:hidden;gap:3px;margin:4px 0 10px}
+.stock i{display:block;height:100%}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
+.leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.tag{font-size:.7rem;color:var(--muted);background:#18201C;border-radius:99px;padding:3px 9px}
 </style>
 </head>
 <body>
@@ -79,6 +97,31 @@ function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate
 function parse(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
 function add(d,n){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()+n);return x}
 function seg(d){return add(d,-((d.getDay()+6)%7))}
+var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function eur(x,dec){var v=(Math.round(x*100)/100).toFixed(dec===0?0:2).split('.');v[0]=v[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ');return v.join(',')+' €'}
+function mesHTML(D,hoje){
+  if(!D.itens) return '';
+  var key=hoje.getFullYear()+'-'+pad(hoje.getMonth()+1), pm=new Date(hoje.getFullYear(),hoje.getMonth()-1,1), pkey=pm.getFullYear()+'-'+pad(pm.getMonth()+1);
+  function st(k){var a=D.itens.filter(function(x){return x.m===k}), v=a.filter(function(x){return x.v>0});
+    return {a:a,v:v,lucro:v.reduce(function(s,x){return s+x.l},0),fat:v.reduce(function(s,x){return s+x.v},0),inv:a.reduce(function(s,x){return s+x.c},0)}}
+  var c=st(key), p=st(pkey), dim=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
+  var best=c.v.slice().sort(function(a,b){return b.l-a.l})[0];
+  var pct=p.lucro>0?Math.min(100,c.lucro/p.lucro*100):100;
+  var h='<section class="card"><div class="hd"><h2>'+MESES[hoje.getMonth()]+'</h2><span class="tag">dia '+hoje.getDate()+' de '+dim+'</span></div>'+
+    '<div class="m3"><div><b>'+c.a.length+'</b><span>comprados</span></div><div><b>'+c.v.length+'</b><span>vendidos</span></div><div class="g"><b>'+eur(c.lucro,0)+'</b><span>lucro</span></div></div>';
+  if(p.lucro>0) h+='<div class="lbar"><span>Lucro vs '+MESES[pm.getMonth()].toLowerCase()+'</span><span><b>'+eur(c.lucro)+'</b> / '+eur(p.lucro)+'</span></div><div class="bar" style="margin-bottom:8px"><i style="width:'+pct+'%"></i></div>';
+  h+='<div class="rows"><div class="r"><span>Faturação</span><b>'+eur(c.fat)+'</b></div>'+
+    '<div class="r"><span>Lucro médio por venda</span><b>'+(c.v.length?eur(c.lucro/c.v.length):'—')+'</b></div>'+
+    '<div class="r"><span>Melhor venda</span><b class="g">'+(best?best.p+' · +'+eur(best.l):'—')+'</b></div>'+
+    '<div class="r"><span>Investido em compras</span><b>'+eur(c.inv)+'</b></div></div></section>';
+  var nv=D.itens.filter(function(x){return !(x.v>0)}), g={ch:0,ca:0,av:0};
+  nv.forEach(function(x){var e=x.e.toLowerCase(); if(/enviado|espera/.test(e))g.ch++; else if(/venda/.test(e))g.av++; else g.ca++});
+  if(nv.length){var cost=nv.reduce(function(s,x){return s+x.c},0);
+    h+='<section class="card"><div class="hd"><h2>Stock por vender</h2><span><b>'+nv.length+'</b> · '+eur(cost)+'</span></div>'+
+    '<div class="stock">'+(g.ch?'<i style="flex:'+g.ch+';background:#60A5FA"></i>':'')+(g.ca?'<i style="flex:'+g.ca+';background:#FBBF24"></i>':'')+(g.av?'<i style="flex:'+g.av+';background:#4ADE80"></i>':'')+'</div>'+
+    '<div class="leg"><span><i style="background:#60A5FA"></i>A chegar '+g.ch+'</span><span><i style="background:#FBBF24"></i>Em casa '+g.ca+'</span><span><i style="background:#4ADE80"></i>À venda '+g.av+'</span></div></section>';}
+  return h;
+}
 function render(D){
   var hoje=parse(D.agora.slice(0,10)), t=iso(hoje), cnt={};
   D.compras.forEach(function(c){cnt[c.d]=(cnt[c.d]||0)+1});
@@ -104,6 +147,7 @@ function render(D){
     '<div class="row2"><div class="stat"><div class="ic" style="background:rgba(251,146,60,.12)">'+FIRE+'</div><div><b>'+s+'</b><span>'+(s===1?'dia seguido':'dias seguidos')+'</span></div></div>'+
       '<div class="stat"><div class="ic" style="background:rgba(251,191,36,.12)">'+STAR+'</div><div><b>'+pts+'</b><span>pontos semana</span></div></div></div>'+
     '<section class="card"><div class="hd"><h2>Esta semana</h2><span><b>'+pts+'</b> / '+META+' pts</span></div><div class="bar"><i style="width:'+Math.min(100,pts/META*100)+'%"></i></div><div class="week">'+dias+'</div></section>'+
+    mesHTML(D,hoje)+
     '<section class="card"><div class="hd"><h2>Últimas semanas</h2><span>recorde <b style="color:var(--gold)">'+best+'</b></span></div><div class="hist">'+hist+'</div></section>'+
     '<footer>Atualizado às '+D.agora.slice(11,16)+'</footer>';
 }
