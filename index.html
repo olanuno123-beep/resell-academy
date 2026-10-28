@@ -104,9 +104,9 @@ function calc(D){
   var mesMil=Object.keys(meses).some(function(k){return meses[k]>=1000});
   var cem=itens.filter(function(x){return x.v>0&&x.l>=100}).sort(function(a,b){return b.l-a.l})[0];
   var best=c.v.slice().sort(function(a,b){return b.l-a.l})[0];
-  var nv=itens.filter(function(x){return !(x.v>0)||/^entregue$/i.test(x.e)}), g={ch:0,ca:0,av:0,en:0,rec:0,luc:0}, parados=[];
+  var nv=itens.filter(function(x){return !(x.v>0)||/^(entregue|por enviar)$/i.test(x.e)}), g={ch:0,ca:0,av:0,en:0,rec:0,luc:0}, parados=[];
   nv.forEach(function(x){var e=x.e.toLowerCase();
-    if(/^entregue$/.test(e)){g.en++;var vv=(x.v>0?x.v:(x.pv||0));g.rec+=vv;if(vv>0)g.luc+=vv-x.c}
+    if(/^(entregue|por enviar)$/.test(e)){g.en++;var vv=(x.v>0?x.v:(x.pv||0));g.rec+=vv;if(vv>0)g.luc+=vv-x.c}
     else if(/enviado|espera|levantar/.test(e))g.ch++;
     else{ if(/venda/.test(e))g.av++; else g.ca++; parados.push({x:x,dias:x.d?Math.round((hoje-parse(x.d))/864e5):null,venda:/venda/.test(e)}) }});
   parados.sort(function(a,b){return (b.dias||0)-(a.dias||0)});
@@ -116,7 +116,7 @@ function calc(D){
 }
 function prevCalc(c){
   var lm=c.v.length?c.lucro/c.v.length:40, feito=0, receber=0, stockL=0, nS=0, est=0;
-  c.a.forEach(function(x){ var ent=/^entregue$/i.test(x.e);
+  c.a.forEach(function(x){ var ent=/^(entregue|por enviar)$/i.test(x.e);
     if(ent){var vv=x.v>0?x.v:(x.pv||0); if(vv>0){receber+=vv-x.c;return}}
     if(x.v>0){feito+=x.l;return}
     if(temPreco(x)==null) est++; stockL+=precoEst(x,lm)-x.c; nS++ });
