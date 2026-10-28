@@ -88,7 +88,7 @@ footer{color:var(--muted);font-size:.75rem;text-align:center;padding-top:4px}
 var API='https://script.google.com/macros/s/AKfycbxGgQQ56FQnRyI_j4GsTRYlJP9y42Ts1y--1hw29EF6D2jv8tETrpol9VHBfGPCAFbs/exec';
 var K=(location.search.match(/[?&]k=([^&]+)/)||[])[1];
 try{if(K)localStorage.setItem('k',K);else K=localStorage.getItem('k')}catch(e){}
-var PTS=2, META=14, LETRAS=['S','T','Q','Q','S','S','D'], SEM=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+var PTS=2, META=7, LETRAS=['S','T','Q','Q','S','S','D'], SEM=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 var LOGO='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="6.5" width="6" height="11" rx="1.4"/><path d="M12 2.5a9.5 9.5 0 0 1 9.3 7.6M21.3 10.1l-2.4-.6M21.3 10.1l.6-2.4M12 21.5a9.5 9.5 0 0 1-9.3-7.6M2.7 13.9l2.4.6M2.7 13.9l-.6 2.4"/></svg>';
 var FIRE='<svg width="22" height="22" viewBox="0 0 24 24" fill="#FB923C"><path d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.6 0 2.4-1.3 2.2-3 2.3 1.8 4 4.4 4 7.2A7 7 0 0 1 12 23a7 7 0 0 1-7-6.8C5 11 10.5 8.5 12 2z"/></svg>';
 var STAR='<svg width="22" height="22" viewBox="0 0 24 24" fill="#FBBF24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>';
@@ -125,31 +125,33 @@ function mesHTML(D,hoje){
 function render(D){
   var hoje=parse(D.agora.slice(0,10)), t=iso(hoje), cnt={};
   D.compras.forEach(function(c){cnt[c.d]=(cnt[c.d]||0)+1});
-  var n=cnt[t]||0, s=0, d=n?hoje:add(hoje,-1);
-  while(cnt[iso(d)]){s++;d=add(d,-1)}
   var m=seg(hoje), wk=0, ks=[], kmax=1;
   for(var i=0;i<7;i++){var di=iso(add(m,i)), k=cnt[di]||0; ks.push({k:k,di:di}); if(di<=t) wk+=k; if(k>kmax) kmax=k}
+  function semana(mm){var q=0; for(var j=0;j<7;j++) q+=cnt[iso(add(mm,j))]||0; return q}
+  var ss=0, w=1; while(semana(add(m,-7*w))>=META){ss++; w++} if(wk>=META) ss++;
+  var hojeN=cnt[t]||0, falta=Math.max(0,META-wk), ok=falta===0, dl=7-((hoje.getDay()+6)%7);
   var dias='';
-  ks.forEach(function(o,i){dias+='<div class="col'+(o.k?' on':'')+(o.di===t?' today':'')+(o.di>t?' fut':'')+'"><span class="v">'+(o.k?'+'+o.k*PTS:'')+'</span><div class="b" style="height:'+(o.k?Math.max(18,o.k/kmax*80):8)+'px"></div><span class="d">'+LETRAS[i]+'</span></div>'});
-  var pts=wk*PTS, rows=[], best=0;
-  for(var w=6;w>=1;w--){var mm=add(m,-7*w), q=0; for(var j=0;j<7;j++) q+=cnt[iso(add(mm,j))]||0; rows.push({m:mm,p:q*PTS}); if(q*PTS>best) best=q*PTS}
-  var hmax=Math.max(best,1), hist='';
-  rows.forEach(function(r){hist+='<div class="hc'+(r.p===best&&best>0?' best':'')+'"><span class="v">'+r.p+'</span><div class="b" style="height:'+(r.p/hmax*84+6)+'px"></div><span class="d">'+pad(r.m.getDate())+'/'+pad(r.m.getMonth()+1)+'</span></div>'});
-  var R=80, C=2*Math.PI*R, f=Math.min(1,n), ok=n>0;
+  ks.forEach(function(o,i){dias+='<div class="col'+(o.k?' on':'')+(o.di===t?' today':'')+(o.di>t?' fut':'')+'"><span class="v">'+(o.k||'')+'</span><div class="b" style="height:'+(o.k?Math.max(18,o.k/kmax*80):8)+'px"></div><span class="d">'+LETRAS[i]+'</span></div>'});
+  var rows=[], best=0;
+  for(var x=6;x>=1;x--){var mm=add(m,-7*x), q=semana(mm); rows.push({m:mm,p:q}); if(q>best) best=q}
+  var hmax=Math.max(best,META,1), hist='';
+  rows.forEach(function(r){hist+='<div class="hc'+(r.p>=META?' best':'')+'"><span class="v">'+r.p+'</span><div class="b" style="height:'+(r.p/hmax*84+6)+'px"></div><span class="d">'+pad(r.m.getDate())+'/'+pad(r.m.getMonth()+1)+'</span></div>'});
+  var R=80, C=2*Math.PI*R, f=Math.min(1,wk/META);
   var ring='<div class="ring"><svg width="190" height="190"><circle cx="95" cy="95" r="'+R+'" stroke="#232C27" stroke-width="14" fill="none"/>'+
-    '<circle cx="95" cy="95" r="'+R+'" stroke="'+(ok?'#4ADE80':'#FBBF24')+'" stroke-width="14" fill="none" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+(ok?0:C)+'" opacity="'+(ok?1:0)+'"/></svg>'+
-    '<div class="c"><span class="n">'+n+'</span><span class="l">'+(n===1?'compra hoje':'compras hoje')+'</span></div></div>';
+    '<circle cx="95" cy="95" r="'+R+'" stroke="'+(ok?'#4ADE80':'#FBBF24')+'" stroke-width="14" fill="none" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+(C*(1-f))+'" opacity="'+(f>0?1:0)+'"/></svg>'+
+    '<div class="c"><span class="n">'+wk+'<span style="font-size:1.6rem;color:var(--muted);font-weight:600">/'+META+'</span></span><span class="l">compras esta semana</span></div></div>';
+  var sub=ok?(wk>META?'+'+(wk-META)+' acima da meta':'Boa semana'):(dl===1?'Último dia da semana':'Ainda tens '+dl+' dias esta semana');
   document.getElementById('app').innerHTML=
     '<div class="top"><div class="logo">'+LOGO+'</div><span class="brand">Resell Academy</span><span class="date">'+SEM[hoje.getDay()]+', '+pad(hoje.getDate())+'/'+pad(hoje.getMonth()+1)+'</span></div>'+
     '<section class="card hero" style="--glow:'+(ok?'rgba(74,222,128,.16)':'rgba(251,191,36,.10)')+'">'+ring+
-      '<div class="status '+(ok?'ok':'no')+'">'+(ok?'Objetivo cumprido · +'+n*PTS+' pts':'Falta 1 compra')+'</div>'+
-      (!ok&&s>0?'<div class="sub">Compra hoje para manteres os '+s+' dias seguidos</div>':'')+'</section>'+
-    '<div class="row2"><div class="stat"><div class="ic" style="background:rgba(251,146,60,.12)">'+FIRE+'</div><div><b>'+s+'</b><span>'+(s===1?'dia seguido':'dias seguidos')+'</span></div></div>'+
-      '<div class="stat"><div class="ic" style="background:rgba(251,191,36,.12)">'+STAR+'</div><div><b>'+pts+'</b><span>pontos semana</span></div></div></div>'+
-    '<section class="card"><div class="hd"><h2>Esta semana</h2><span><b>'+pts+'</b> / '+META+' pts</span></div><div class="bar"><i style="width:'+Math.min(100,pts/META*100)+'%"></i></div><div class="week">'+dias+'</div></section>'+
+      '<div class="status '+(ok?'ok':'no')+'">'+(ok?'Meta da semana cumprida':'Faltam '+falta+(falta===1?' compra':' compras'))+'</div>'+
+      '<div class="sub">'+sub+'</div></section>'+
+    '<div class="row2"><div class="stat"><div class="ic" style="background:rgba(251,146,60,.12)">'+FIRE+'</div><div><b>'+ss+'</b><span>'+(ss===1?'semana com meta':'semanas seguidas')+'</span></div></div>'+
+      '<div class="stat"><div class="ic" style="background:rgba(251,191,36,.12)">'+STAR+'</div><div><b>'+hojeN+'</b><span>'+(hojeN===1?'compra hoje':'compras hoje')+'</span></div></div></div>'+
+    '<section class="card"><div class="hd"><h2>Esta semana</h2><span><b>'+wk+'</b> / '+META+' compras</span></div><div class="week">'+dias+'</div></section>'+
     mesHTML(D,hoje)+
     '<section class="card"><div class="hd"><h2>Últimas semanas</h2><span>recorde <b style="color:var(--gold)">'+best+'</b></span></div><div class="hist">'+hist+'</div></section>'+
-    '<footer>Atualizado às '+D.agora.slice(11,16)+'</footer>';
+    '<footer>Meta: '+META+' compras por semana · atualizado às '+D.agora.slice(11,16)+'</footer>';
 }
 var app=document.getElementById('app');
 try{var c=JSON.parse(localStorage.getItem('d'));if(c)render(c)}catch(e){}
