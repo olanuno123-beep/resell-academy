@@ -268,7 +268,7 @@ I.dn='<path d="M3 7l6 6 4-4 8 8"></path><path d="M15 17h6v-6"></path>';
 function num(v){var n=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(',','.'));return isNaN(n)?null:n}
 function soma(a,f){return a.reduce(function(s,x){return s+f(x)},0)}
 function chave(p){return String(p).trim().toLowerCase().replace(/\s+/g,' ')}
-function curto(n){return String(n).trim().replace(/^iphone\s*/i,'').replace(/\s*\((.+)\)/,' → $1')}
+function curto(n){return String(n).trim().replace(/^iphone\s*/i,'').replace(/\s*\((.+)\)/,' → $1').replace(/\bpro\b/g,'Pro').replace(/\bmax\b/g,'Max')}
 function vendido(x){return x.v>0&&!/^(entregue|por enviar)$/i.test(x.e)}
 function lucroPrev(x,lm){var ent=/^(entregue|por enviar)$/i.test(x.e),vv=x.v>0?x.v:(x.pv||0);
   if(x.v>0&&!ent)return x.l; if(vv>0)return vv-x.c; return precoEst(x,lm)-x.c}
