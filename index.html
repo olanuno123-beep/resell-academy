@@ -187,7 +187,7 @@ function inicio(S){
 }
 
 function stock(S){
-  var g=S.g, cards='';
+  var g=S.g, cards='', nS=g.ch+g.ca+g.av, capS=S.nv.filter(function(x){return !/^(entregue|por enviar)$/i.test(x.e)}).reduce(function(s,x){return s+x.c},0);
   S.parados.forEach(function(o){var d=o.dias, col=d===null?'#7E8B86':d>21?'#F87171':d>=14?'#FB923C':'#3DDC84', bc=d===null?'#1E2826':d>21?'rgba(248,113,113,.45)':d>=14?'rgba(251,146,60,.4)':'#1E2826';
     var txt=d===null?'sem data':d>21?'+21 dias · baixa o preço ou republica':d>=14?'14–21 dias · atenção':'menos de 14 dias · tudo bem';
     cards+='<a href="#a/'+encodeURIComponent(o.x.r)+'" style="border-radius:22px;padding:12px;background:#111615;border:1px solid '+bc+';display:flex;gap:12px;align-items:center">'+
@@ -201,15 +201,15 @@ function stock(S){
   return '<div class="glow" style="top:-160px;right:-120px;background:radial-gradient(closest-side,rgba(96,165,250,.2),rgba(96,165,250,0) 70%)"></div>'+
   '<div class="top"><a href="#" class="back" aria-label="Voltar ao início">'+ico(I.back,'#EEF2F0',20,2.2)+'</a><span class="sora" style="font-weight:700;font-size:18px">Stock</span><span style="width:44px"></span></div>'+pesquisaHTML()+
   '<div style="border-radius:28px;padding:22px 20px;background:linear-gradient(180deg,#111816 0%,#0C1110 100%);border:1px solid #1E2826;display:flex;flex-direction:column;gap:16px">'+
-    '<div style="display:flex;flex-direction:column;gap:2px"><span class="lbl">CAPITAL EM STOCK</span><span class="sora" style="font-weight:800;font-size:40px;letter-spacing:-1.5px">'+eur(S.cap)+'</span><span style="font-size:13px" class="muted">'+S.nv.length+' artigos</span></div>'+
-    '<div style="display:flex;gap:4px;height:12px">'+(g.ch?'<div style="flex:'+g.ch+';border-radius:99px;background:#60A5FA"></div>':'')+(g.ca?'<div style="flex:'+g.ca+';border-radius:99px;background:#FBBF24"></div>':'')+(g.av?'<div style="flex:'+g.av+';border-radius:99px;background:#3DDC84"></div>':'')+(g.en?'<div style="flex:'+g.en+';border-radius:99px;background:#C084FC"></div>':'')+'</div>'+
-    '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">'+
+    '<div style="display:flex;flex-direction:column;gap:2px"><span class="lbl">CAPITAL EM STOCK</span><span class="sora" style="font-weight:800;font-size:40px;letter-spacing:-1.5px">'+eur(capS)+'</span><span style="font-size:13px" class="muted">'+nS+(nS===1?' artigo':' artigos')+'</span></div>'+
+    '<div style="display:flex;gap:4px;height:12px">'+(g.ch?'<div style="flex:'+g.ch+';border-radius:99px;background:#60A5FA"></div>':'')+(g.ca?'<div style="flex:'+g.ca+';border-radius:99px;background:#FBBF24"></div>':'')+(g.av?'<div style="flex:'+g.av+';border-radius:99px;background:#3DDC84"></div>':'')+'</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'+
       '<div style="display:flex;flex-direction:column;gap:2px"><span class="sora" style="font-weight:700;font-size:22px;color:#93C5FD">'+g.ch+'</span><span style="font-size:11px" class="muted">a chegar</span></div>'+
       '<div style="display:flex;flex-direction:column;gap:2px"><span class="sora" style="font-weight:700;font-size:22px;color:#FCD34D">'+g.ca+'</span><span style="font-size:11px" class="muted">em casa</span></div>'+
       '<div style="display:flex;flex-direction:column;gap:2px"><span class="sora" style="font-weight:700;font-size:22px;color:#7CF0B0">'+g.av+'</span><span style="font-size:11px" class="muted">à venda</span></div>'+
-      '<div style="display:flex;flex-direction:column;gap:2px"><span class="sora" style="font-weight:700;font-size:22px;color:#D8B4FE">'+g.en+'</span><span style="font-size:11px" class="muted">entregues</span></div></div></div>'+
+      '</div></div>'+
   (g.en?'<div style="border-radius:22px;padding:16px 18px;background:rgba(192,132,252,.08);border:1px solid rgba(192,132,252,.3);display:flex;justify-content:space-between;align-items:center">'+
-    '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#D8B4FE">A receber</span><span class="sora" style="font-weight:700;font-size:22px">'+eur(g.rec)+'</span></div>'+
+    '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#D8B4FE">A receber</span><span class="sora" style="font-weight:700;font-size:22px">'+eur(g.rec)+'</span><span style="font-size:12px" class="muted"><b class="sora" style="color:#D8B4FE">'+g.en+'</b> '+(g.en===1?'entregue':'entregues')+'</span></div>'+
     '<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end"><span style="font-size:12px" class="muted">Lucro a caminho</span><span class="sora" style="font-weight:700;font-size:22px;color:#3DDC84">+'+eur(g.luc,0)+'</span></div></div>':'')+
   (S.parados.length?'<div class="hdr" style="margin-top:4px"><span class="h2">Parados há mais tempo</span><span style="font-size:12px" class="muted">'+S.parados.length+' artigos</span></div>'+cards:'')+
   (alerta?'<div style="border-radius:18px;padding:14px 16px;background:#0E1312;border:1px dashed #2A3532;display:flex;gap:10px;align-items:flex-start">'+ico(I.warn,'#FBBF24',18)+'<span style="font-size:13px;line-height:1.45;color:#C9D3CF">'+alerta+'</span></div>':'')+
