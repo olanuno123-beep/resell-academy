@@ -66,6 +66,8 @@ var API='https://script.google.com/macros/s/AKfycbxGgQQ56FQnRyI_j4GsTRYlJP9y42Ts
 var K=(location.search.match(/[?&]k=([^&]+)/)||[])[1];
 try{if(K)localStorage.setItem('k',K);else K=localStorage.getItem('k')}catch(e){}
 var META=7;
+var DEGRAUS=[7,10,15,20,25,30];
+function alvo(wk){for(var i=0;i<DEGRAUS.length;i++)if(wk<DEGRAUS[i])return DEGRAUS[i];return Math.ceil((wk+1)/5)*5}
 // Preços de venda estimados por modelo (para a previsão). Modelos sem preço: custo + lucro médio do mês.
 var PRECOS={'iphone 11':95,'iphone xr':85,'macbook pro 2019':300,'iphone 11 pro':120,'mac mini':90,'iphone 12':75,'iphone 12 pro':80};
 var PRECO_REF={'REF 825':100,'REF 843':200,'REF 848':200};
@@ -145,7 +147,7 @@ function prevCalc(c){
 
 function inicio(S){
   var N=NIVEIS[S.nivel], c=S.c, R1=120, C1=2*Math.PI*R1, R2=96, C2=2*Math.PI*R2;
-  var f1=S.p.lucro>0?Math.min(1,c.lucro/S.p.lucro):(c.lucro>0?1:0), f2=Math.min(1,S.wk/META);
+  var f1=S.p.lucro>0?Math.min(1,c.lucro/S.p.lucro):(c.lucro>0?1:0), f2=Math.min(1,S.wk/alvo(S.wk));
   var pct=S.p.lucro>0?Math.round(c.lucro/S.p.lucro*100):null, pmn=MESES[S.pm.getMonth()];
   var H=110, hmax=Math.max(S.best6,META,1), bars='', lbls='';
   S.rows.forEach(function(r){var ok=r.p>=META, top=r.p===S.best6&&ok;
@@ -164,7 +166,7 @@ function inicio(S){
       '<span class="sora" style="font-weight:800;font-size:54px;letter-spacing:-2px;color:#F4FFF8">'+eur(c.lucro,0).replace(' €','')+'<span style="font-size:30px;color:#3DDC84"> €</span></span>'+
       '<span style="font-size:13px" class="muted">'+(pct!==null?pct+'% de '+pmn:'primeiro mês')+'</span></div></div>'+
     '<div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:99px;background:#3DDC84"></span><span style="font-size:13px;color:#C9D3CF">Lucro vs '+pmn.slice(0,3)+'.</span></div>'+
-    '<div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:99px;background:#FBBF24"></span><span style="font-size:13px;color:#C9D3CF">Compras '+S.wk+'/'+META+(S.wk>=META?' ✓':'')+'</span></div></div></div>'+
+    '<div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:99px;background:#FBBF24"></span><span style="font-size:13px;color:#C9D3CF">Compras '+S.wk+'/'+alvo(S.wk)+'</span></div></div>'+(S.wk>=META?'<span style="font-size:13px;font-weight:600;color:#FBBF24;text-align:center">Meta de '+META+' cumprida · próximo desafio: '+alvo(S.wk)+' compras</span>':'<span style="font-size:13px;color:#9BA8A3;text-align:center">Faltam '+(META-S.wk)+' para a meta de '+META+'</span>')+'</div>'+
   '<div style="border-radius:22px;padding:16px 18px;background:rgba(61,220,132,.08);border:1px solid rgba(61,220,132,.3);display:flex;align-items:center;gap:14px">'+
     '<div style="width:44px;height:44px;border-radius:14px;background:rgba(61,220,132,.16);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(I.up,'#3DDC84',22)+'</div>'+
     '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:600;letter-spacing:1px;color:#7CF0B0">PREVISÃO</span><span style="font-size:15px;line-height:1.35">Se venderes tudo o que compraste em '+MESES[S.hoje.getMonth()]+', o mês fecha com <b class="sora" style="color:#3DDC84">~'+eur(S.prev.total,0)+'</b> de lucro</span><span style="font-size:12px;color:#9BA8A3;line-height:1.4">'+eur(S.prev.feito,0)+' já feito · '+eur(S.prev.receber,0)+' a receber · '+eur(S.prev.stock,0)+' em '+S.prev.nS+' por vender'+(S.prev.est?' ('+S.prev.est+' sem preço definido)':'')+'</span></div></div>'+
