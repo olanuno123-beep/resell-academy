@@ -157,7 +157,7 @@ function inicio(S){
   return '<div class="glow" style="top:-140px;left:-60px;background:radial-gradient(closest-side,rgba(61,220,132,.22),rgba(61,220,132,0) 70%)"></div>'+
   '<div class="top"><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:12px;background:#3DDC84;display:flex;align-items:center;justify-content:center">'+ico(I.logo,'#06210F',22,2.2)+'</div>'+
     '<div style="display:flex;flex-direction:column"><span class="sora" style="font-weight:700;font-size:17px;letter-spacing:-.2px">Resell Academy</span><span style="font-size:12px" class="muted">'+SEM[S.hoje.getDay()]+', '+S.hoje.getDate()+' de '+MESES[S.hoje.getMonth()]+'</span></div></div>'+
-    '<a href="#nivel" class="chip" style="background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);color:#FBBF24">'+ico(I.star,'#FBBF24',14,2.2)+N.n+' · Nív. '+S.nivel+'</a></div>'+
+    '<div style="display:flex;align-items:center;gap:10px">'+sino()+'<a href="#nivel" class="chip" style="background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);color:#FBBF24">'+ico(I.star,'#FBBF24',14,2.2)+N.n+' · Nív. '+S.nivel+'</a></div></div>'+
   '<div style="border-radius:28px;padding:22px 18px 20px;background:linear-gradient(180deg,#111816 0%,#0C1110 100%);border:1px solid #1E2826;display:flex;flex-direction:column;align-items:center;gap:14px">'+
     '<div style="position:relative;width:280px;height:280px"><svg role="img" aria-label="Lucro do mês e compras da semana" width="280" height="280" viewBox="0 0 280 280"><defs><linearGradient id="gL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7CF0B0"></stop><stop offset="1" stop-color="#22C55E"></stop></linearGradient><linearGradient id="gC" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FDE68A"></stop><stop offset="1" stop-color="#F59E0B"></stop></linearGradient></defs>'+
       '<circle cx="140" cy="140" r="'+R1+'" fill="none" stroke="#1A2321" stroke-width="16"></circle>'+(f1>0?'<circle cx="140" cy="140" r="'+R1+'" fill="none" stroke="url(#gL)" stroke-width="16" stroke-linecap="round" stroke-dasharray="'+(C1*f1)+' '+C1+'" transform="rotate(-90 140 140)"></circle>':'')+
@@ -505,15 +505,91 @@ function procura(q){var el=document.getElementById('qr');if(!el)return;q=String(
   var r=(DATA.itens||[]).filter(function(x){return (x.r+' '+x.p).toLowerCase().indexOf(q)>=0||x.r.replace(/\D/g,'')===q.replace(/\D/g,'')&&q.replace(/\D/g,'')}).slice(-12).reverse();
   el.innerHTML=r.length?r.map(function(x){var ce=corEstado(x.e);return '<a href="#a/'+encodeURIComponent(x.r)+'" style="border-radius:16px;padding:12px 14px;background:#111615;border:1px solid #1E2826;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:52px"><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:14px;font-weight:600">'+esc(x.p)+' <span class="muted" style="font-weight:500;font-size:12px">'+esc(x.r)+'</span></span><span style="font-size:12px;color:'+ce[2]+'">'+esc(x.e)+'</span></span><span class="sora" style="font-weight:700;font-size:14px;white-space:nowrap">'+(x.v>0?(x.l<0?'':'+')+eur(x.l,0):eur(x.c,0))+'</span></a>'}).join(''):'<span style="font-size:13px" class="muted">Nada encontrado.</span>'}
 
+// ---------- AVISOS ----------
+I.bell='<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>';
+var AVMSG='';
+function sino(){var n=(DATA.avisos||[]).length;
+  return '<a href="#avisos" aria-label="Avisos'+(n?': '+n+' por ver':'')+'" style="position:relative;width:40px;height:40px;border-radius:12px;background:#111615;border:1px solid #1E2826;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(I.bell,'#EEF2F0',20,2)+
+  (n?'<span style="position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:#F97316;color:#1A0B02;font:700 11px Inter,sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #07090A">'+(n>99?'99+':n)+'</span>':'')+'</a>'}
+function avData(d){if(!d)return '';var h=iso(new Date()),o=iso(add(new Date(),-1));if(d===h)return 'hoje';if(d===o)return 'ontem';
+  return Number(d.slice(8,10))+' '+MESES[Number(d.slice(5,7))-1].slice(0,3)}
+function avRef(r){return '<a href="#a/'+encodeURIComponent(r)+'" style="text-decoration:underline;text-underline-offset:3px">'+esc(r)+'</a>'}
+function avTipo(a){var t=a.t,m;
+  if(/devolu/i.test(t+' '+a.s))return {tt:'Pedido de devolução',c:'#FCA5A5',b:'rgba(248,113,113,.4)',bg:'rgba(248,113,113,.06)',
+    tx:'Email: “'+esc(a.s)+'”. Vê no Vinted qual é o artigo e trata da devolução.',bt:[['tratei','Já tratei',1]]};
+  if((m=t.match(/Vendeste (REF \d+) a (\S+) com Verifica/))){var x=(DATA.itens||[]).filter(function(i){return i.r===m[1]})[0],pr=x&&(x.v>0?x.v:x.pv);
+    return {tt:'Falta o preço: '+avRef(m[1]),c:'#FCD34D',b:'rgba(251,191,36,.4)',bg:'rgba(251,191,36,.05)',
+      tx:'Vendeste a '+esc(m[2])+' com verificação eletrónica e o email não traz o preço.'+(pr>0?' Já está registado: <b>'+eur(pr)+'</b>.':''),
+      bt:pr>0?[['ok','Está certo',1]]:null,preco:pr>0?null:m[1]}}
+  if((m=t.match(/^"(.+?)" → (.+?): há (\d+) iguais, marquei (REF \d+)/)))
+    return {tt:'Confirma: '+avRef(m[4])+' → '+esc(m[2]),c:'#93C5FD',b:'rgba(96,165,250,.4)',bg:'rgba(96,165,250,.05)',
+      tx:'O email dizia só “'+esc(m[1])+'” e havia '+m[3]+' iguais a caminho.',bt:[['ok','Está certo',1],['outro','Era outro',0]]};
+  if((m=t.match(/^Enviaste "(.+?)": há (\d+) iguais, marquei (REF \d+)/)))
+    return {tt:'Confirma: '+avRef(m[3])+' → Entregue',c:'#93C5FD',b:'rgba(96,165,250,.4)',bg:'rgba(96,165,250,.05)',
+      tx:'Enviaste “'+esc(m[1])+'” e havia '+m[2]+' vendas iguais.',bt:[['ok','Está certo',1],['outro','Era outro',0]]};
+  if((m=t.match(/^Venda concluída de "(.+?)": há (\d+) iguais, pus o preço em (\S+)\./)))
+    return {tt:'Confirma: preço em '+esc(m[3]),c:'#93C5FD',b:'rgba(96,165,250,.4)',bg:'rgba(96,165,250,.05)',
+      tx:'Venda concluída de “'+esc(m[1])+'” e havia '+m[2]+' iguais.',bt:[['ok','Está certo',1],['outro','Era outro',0]]};
+  if(/reembolso parcial/i.test(t)&&/passou para/.test(t))
+    return {tt:'Reembolso parcial',c:'#C4B5FD',b:'rgba(167,139,250,.35)',bg:'rgba(167,139,250,.05)',tx:esc(t).replace(/(REF \d+)/,function(r){return avRef(r)}),bt:[['ok','Ok',1]]};
+  if(/^Enviaste "(.+?)" — venda não encontrada/.test(t))
+    return {tt:'Envio sem venda',c:'#EEF2F0',b:'#26312E',bg:'#111615',tx:'Enviaste “'+esc(t.match(/"(.+?)"/)[1])+'”, mas não encontrei essa venda na folha.',bt:[['tratei','Já tratei',1]]};
+  if(/compra não encontrada/.test(t))
+    return {tt:'Compra não encontrada',c:'#EEF2F0',b:'#26312E',bg:'#111615',tx:esc(t.replace(/ — compra não encontrada\.?/,''))+': não encontrei esta compra na folha.',bt:[['tratei','Já tratei',1]]};
+  return {tt:'Aviso',c:'#EEF2F0',b:'#26312E',bg:'#111615',tx:esc(t).replace(/(REF \d+)/,function(r){return avRef(r)}),bt:[['tratei','Já tratei',1]]};
+}
+function avCard(a){var T=avTipo(a),B='';
+  if(T.preco)B='<div style="display:flex;gap:8px;align-items:center"><label for="avp'+a.i+'" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Preço de venda</label><input id="avp'+a.i+'" class="inp" inputmode="decimal" placeholder="Preço €" style="flex:1"><button type="button" id="avb'+a.i+'" onclick="avPreco('+a.i+',\''+T.preco+'\')" class="btn" style="border:0;min-height:44px;padding:0 18px;border-radius:14px;background:#3DDC84;color:#06210F;font-family:Inter,sans-serif">Guardar</button></div>';
+  else B='<div style="display:flex;gap:8px;flex-wrap:wrap">'+T.bt.map(function(b){return '<button type="button" onclick="avResp('+a.i+',\''+b[0]+'\',this)" class="btn" style="min-height:44px;padding:0 18px;border-radius:14px;font-family:Inter,sans-serif;'+(b[2]?'border:0;background:#3DDC84;color:#06210F':'border:1px solid #2A3532;background:transparent;color:#EEF2F0')+'">'+b[1]+'</button>'}).join('')+'</div>';
+  return '<div id="av'+a.i+'" style="border-radius:20px;padding:16px;background:'+T.bg+';border:1px solid '+T.b+';display:flex;flex-direction:column;gap:10px">'+
+    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><span style="font-size:15px;font-weight:700;color:'+T.c+'">'+T.tt+'</span><span style="font-size:12px;white-space:nowrap" class="muted">'+avData(a.d)+'</span></div>'+
+    '<span style="font-size:14px;line-height:1.45;color:#C9D3CF">'+T.tx+'</span>'+B+'</div>'}
+function avFeito(a){var T=avTipo(a);
+  return '<div style="border-radius:16px;padding:12px 14px;background:#0C1110;border:1px solid #1A2321;display:flex;gap:10px;align-items:center">'+ico(I.check,'#3DDC84',18,2.4)+
+    '<span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:13px;font-weight:600">'+T.tt.replace(/<[^>]+>/g,'')+'</span><span style="font-size:12px" class="muted">'+(/^outro/.test(a.x)?'Marcado como errado':'Resolvido')+' · '+avData(String(a.x).slice(-16,-6))+'</span></span></div>'}
+function avisos(S){var A=DATA.avisos||[],R=DATA.resolvidos||[],lim=iso(add(S.hoje,-7)),velhos=A.filter(function(a){return a.d&&a.d<lim}).length;
+  return '<div class="top"><a href="#" class="back" aria-label="Voltar ao início">'+ico(I.back,'#EEF2F0',20,2.2)+'</a><span class="sora" style="font-weight:700;font-size:18px">Avisos</span>'+
+    (A.length?'<span class="chip" style="background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.4);color:#FDBA74">'+A.length+' por ver</span>':'<span style="width:44px"></span>')+'</div>'+
+  '<span style="font-size:13px;line-height:1.45" class="muted">O que o script não conseguiu decidir sozinho, a partir dos emails do Vinted.</span>'+
+  (AVMSG?'<div class="note" role="status">'+ico(I.warn,'#FBBF24',18)+'<span style="font-size:13px;line-height:1.45;color:#C9D3CF">'+AVMSG+'</span></div>':'')+
+  (A.length?A.map(avCard).join(''):'<div class="card" style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center">'+ico(I.check,'#3DDC84',30,2.2)+'<span style="font-size:15px;font-weight:600">Está tudo em dia</span><span style="font-size:13px" class="muted">Não há avisos por ver.</span></div>')+
+  (velhos>2?'<button type="button" id="avl" onclick="avLimpar()" class="btn" style="background:transparent;border:1px solid #2A3532;color:#C9D3CF;font-family:Inter,sans-serif">Arquivar os '+velhos+' com mais de 7 dias</button>':'')+
+  (R.length?'<span class="lbl" style="margin-top:6px">RESOLVIDOS</span>'+R.map(avFeito).join(''):'');
+}
+function avTirar(i,r){var a=null;DATA.avisos=(DATA.avisos||[]).filter(function(x){if(x.i===i){a=x;return false}return true});
+  if(a){a.x=r+' · '+iso(new Date())+' 00:00';DATA.resolvidos=[a].concat(DATA.resolvidos||[]).slice(0,5)}
+  try{localStorage.setItem('d',JSON.stringify(DATA))}catch(e){}}
+function avResp(i,r,btn){if(btn){btn.disabled=true;btn.textContent='…'}
+  return fetch(API+'?f=aviso&k='+encodeURIComponent(K)+'&i='+i+'&r='+r).then(function(x){return x.json()}).then(function(d){
+    if(!d.ok)throw new Error(d.erro||'erro');
+    avTirar(i,r);AVMSG=r==='outro'?'Marquei como errado. Corrige o estado do artigo certo na folha, ou diz ao Claude qual era.':'';show(true);
+  }).catch(function(){if(btn){btn.disabled=false;btn.textContent='Sem ligação · tenta outra vez'}});
+}
+function avPreco(i,ref){var inp=document.getElementById('avp'+i),b=document.getElementById('avb'+i),v=num(inp&&inp.value);
+  if(!(v>0)){if(inp)inp.focus();return}
+  b.disabled=true;b.textContent='A guardar…';
+  fetch(API+'?f=set&k='+encodeURIComponent(K)+'&ref='+encodeURIComponent(ref)+'&pv='+v).then(function(x){return x.json()}).then(function(d){
+    if(!d.ok)throw new Error(d.erro||'erro');
+    return avResp(i,'ok')}).then(function(){load()}).catch(function(){b.disabled=false;b.textContent='Tenta outra vez'});
+}
+function avLimpar(){var lim=iso(add(new Date(),-7)),L=(DATA.avisos||[]).filter(function(a){return a.d&&a.d<lim}),b=document.getElementById('avl'),n=0;
+  if(!L.length||!window.confirm('Arquivar '+L.length+' avisos com mais de 7 dias?'))return;
+  if(b)b.disabled=true;
+  (function prox(){if(!L.length){AVMSG='Arquivei '+n+' avisos antigos.';show(true);return}
+    var a=L.shift();if(b)b.textContent='A arquivar… '+(n+1);
+    fetch(API+'?f=aviso&k='+encodeURIComponent(K)+'&i='+a.i+'&r=tratei').then(function(x){return x.json()}).then(function(d){if(d.ok){avTirar(a.i,'tratei');n++}prox()}).catch(function(){AVMSG='Parei a meio (sem ligação). Arquivei '+n+'.';show(true)});
+  })();
+}
+
 // ---------- SEPARADORES + ROUTER ----------
-function tabs(h){var a=h===''||h==='semana'?'':h==='ano'?'numeros':h.indexOf('a/')===0?'stock':h;
+function tabs(h){var a=h===''||h==='semana'||h==='avisos'?'':h==='ano'?'numeros':h.indexOf('a/')===0?'stock':h;
   var T=[['','Início',I.home],['stock','Stock',I.box],['comprar','Comprar',I.tag],['numeros','Números',I.chart],['nivel','Nível',I.star]];
   return '<nav class="tabs" aria-label="Menu principal"><div>'+T.map(function(t){var on=t[0]===a;return '<a href="#'+t[0]+'"'+(on?' aria-current="page"':'')+' class="tb'+(on?' on':'')+'">'+ico(t[2],'currentColor',22)+t[1]+'</a>'}).join('')+'</div></nav>'}
 function show(keep){
   if(!DATA) return;
   var S=calc(DATA), h=decodeURIComponent((location.hash||'').replace('#','')), html;
   if(h==='stock')html=stock(S);else if(h==='nivel')html=nivel(S);else if(h==='comprar')html=comprar(S);else if(h==='numeros')html=numeros(S);
-  else if(h==='ano')html=ano(S);else if(h==='semana')html=semana(S);else if(h.indexOf('a/')===0)html=artigo(S,h.slice(2));else html=inicio(S);
+  else if(h==='ano')html=ano(S);else if(h==='semana')html=semana(S);else if(h==='avisos')html=avisos(S);else if(h.indexOf('a/')===0)html=artigo(S,h.slice(2));else html=inicio(S);
   document.getElementById('app').innerHTML='<div class="wrap">'+html+'<footer><button type="button" class="upd" onclick="this.textContent=\'A atualizar…\';load()">Atualizado às '+DATA.agora.slice(11,16)+' · tocar para atualizar</button></footer></div>'+tabs(h);
   if(!keep) window.scrollTo(0,0);
   if(h==='comprar')updOf();if(h.indexOf('a/')===0)updArt();
