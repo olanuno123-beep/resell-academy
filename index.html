@@ -536,6 +536,8 @@ function avTipo(a){var t=a.t,m;
   if((m=t.match(/^Venda concluída de "(.+?)": há (\d+) iguais, pus o preço em (\S+)\./)))
     return {tt:'Confirma: preço em '+esc(m[3]),c:'#93C5FD',b:'rgba(96,165,250,.4)',bg:'rgba(96,165,250,.05)',
       tx:'Venda concluída de “'+esc(m[1])+'” e havia '+m[2]+' iguais.',bt:[['ok','Está certo',1],['outro','Era outro',0]]};
+  if((m=t.match(/^Qual\? "(.+?)" → (.+?): (.+?)(?: \[conv:[^\]]+\])?$/))){var ops=m[3].split(', ').map(function(o){var q=o.match(/^(REF \d+) \((.*)\)$/);return q?[q[1],q[2]]:null}).filter(Boolean);
+    return {tt:'Qual é? → '+esc(m[2]),c:'#FCD34D',b:'rgba(251,191,36,.4)',bg:'rgba(251,191,36,.05)',tx:'Chegou um email de “'+esc(m[1])+'”, mas há '+ops.length+' compras iguais. Vê na conversa do Vinted quem é o vendedor e escolhe a certa:',escolha:ops}}
   if(/reembolso parcial/i.test(t)&&/passou para/.test(t))
     return {tt:'Reembolso parcial',c:'#C4B5FD',b:'rgba(167,139,250,.35)',bg:'rgba(167,139,250,.05)',tx:esc(t).replace(/(REF \d+)/,function(r){return avRef(r)}),bt:[['ok','Ok',1]]};
   if(/^Enviaste "(.+?)" — venda não encontrada/.test(t))
@@ -545,7 +547,8 @@ function avTipo(a){var t=a.t,m;
   return {tt:'Aviso',c:'#EEF2F0',b:'#26312E',bg:'#111615',tx:esc(t).replace(/(REF \d+)/,function(r){return avRef(r)}),bt:[['tratei','Já tratei',1]]};
 }
 function avCard(a){var T=avTipo(a),B='';
-  if(T.preco)B='<div style="display:flex;gap:8px;align-items:center"><label for="avp'+a.i+'" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Preço de venda</label><input id="avp'+a.i+'" class="inp" inputmode="decimal" placeholder="Preço €" style="flex:1"><button type="button" id="avb'+a.i+'" onclick="avPreco('+a.i+',\''+T.preco+'\')" class="btn" style="border:0;min-height:44px;padding:0 18px;border-radius:14px;background:#3DDC84;color:#06210F;font-family:Inter,sans-serif">Guardar</button></div>';
+  if(T.escolha)B='<div style="display:flex;flex-direction:column;gap:8px">'+T.escolha.map(function(o){return '<button type="button" onclick="avEscolha('+a.i+',\''+o[0]+'\',this)" class="btn" style="min-height:46px;justify-content:space-between;padding:0 16px;border-radius:14px;border:1px solid #2A3532;background:#111615;color:#EEF2F0;font-family:Inter,sans-serif"><span>'+esc(o[0])+'</span><span style="font-weight:500;font-size:13px;color:#9BA8A3">'+esc(o[1])+'</span></button>'}).join('')+'<button type="button" onclick="avResp('+a.i+',\'outro\',this)" class="btn" style="min-height:40px;border:0;background:transparent;color:#9BA8A3;font-family:Inter,sans-serif;font-size:13px">Nenhum destes</button></div>';
+  else if(T.preco)B='<div style="display:flex;gap:8px;align-items:center"><label for="avp'+a.i+'" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Preço de venda</label><input id="avp'+a.i+'" class="inp" inputmode="decimal" placeholder="Preço €" style="flex:1"><button type="button" id="avb'+a.i+'" onclick="avPreco('+a.i+',\''+T.preco+'\')" class="btn" style="border:0;min-height:44px;padding:0 18px;border-radius:14px;background:#3DDC84;color:#06210F;font-family:Inter,sans-serif">Guardar</button></div>';
   else B='<div style="display:flex;gap:8px;flex-wrap:wrap">'+T.bt.map(function(b){return '<button type="button" onclick="avResp('+a.i+',\''+b[0]+'\',this)" class="btn" style="min-height:44px;padding:0 18px;border-radius:14px;font-family:Inter,sans-serif;'+(b[2]?'border:0;background:#3DDC84;color:#06210F':'border:1px solid #2A3532;background:transparent;color:#EEF2F0')+'">'+b[1]+'</button>'}).join('')+'</div>';
   return '<div id="av'+a.i+'" style="border-radius:20px;padding:16px;background:'+T.bg+';border:1px solid '+T.b+';display:flex;flex-direction:column;gap:10px">'+
     '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><span style="font-size:15px;font-weight:700;color:'+T.c+'">'+T.tt+'</span><span style="font-size:12px;white-space:nowrap" class="muted">'+avData(a.d)+'</span></div>'+
@@ -570,6 +573,12 @@ function avResp(i,r,btn){if(btn){btn.disabled=true;btn.textContent='…'}
     if(!d.ok)throw new Error(d.erro||'erro');
     avTirar(i,r);AVMSG=r==='outro'?'Marquei como errado. Corrige o estado do artigo certo na folha, ou diz ao Claude qual era.':'';show(true);
   }).catch(function(){if(btn){btn.disabled=false;btn.textContent='Sem ligação · tenta outra vez'}});
+}
+function avEscolha(i,ref,btn){if(btn){btn.disabled=true;btn.firstChild.textContent='A guardar…'}
+  fetch(API+'?f=escolha&k='+encodeURIComponent(K)+'&i='+i+'&ref='+encodeURIComponent(ref)).then(function(x){return x.json()}).then(function(d){
+    if(!d.ok)throw new Error(d.erro||'erro');
+    avTirar(i,'ok');AVMSG='Guardado: '+ref+' atualizado na folha.';show(true);load();
+  }).catch(function(){if(btn){btn.disabled=false;btn.firstChild.textContent='Sem ligação · tenta outra vez'}});
 }
 function avPreco(i,ref){var inp=document.getElementById('avp'+i),b=document.getElementById('avb'+i),v=num(inp&&inp.value);
   if(!(v>0)){if(inp)inp.focus();return}
