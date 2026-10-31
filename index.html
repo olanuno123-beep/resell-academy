@@ -167,6 +167,7 @@ function inicio(S){
       '<span style="font-size:13px" class="muted">'+(pct!==null?pct+'% de '+pmn:'primeiro mês')+'</span></div></div>'+
     '<div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:99px;background:#3DDC84"></span><span style="font-size:13px;color:#C9D3CF">Lucro vs '+pmn.slice(0,3)+'.</span></div>'+
     '<div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:99px;background:#FBBF24"></span><span style="font-size:13px;color:#C9D3CF">Compras '+S.wk+'/'+alvo(S.wk)+'</span></div></div>'+(S.wk>=META?'<span style="font-size:13px;font-weight:600;color:#FBBF24;text-align:center">Meta de '+META+' cumprida · próximo desafio: '+alvo(S.wk)+' compras</span>':'<span style="font-size:13px;color:#9BA8A3;text-align:center">Faltam '+(META-S.wk)+' para a meta de '+META+'</span>')+'</div>'+
+  mesesAbertos(S)+
   '<div style="border-radius:22px;padding:16px 18px;background:rgba(61,220,132,.08);border:1px solid rgba(61,220,132,.3);display:flex;align-items:center;gap:14px">'+
     '<div style="width:44px;height:44px;border-radius:14px;background:rgba(61,220,132,.16);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(I.up,'#3DDC84',22)+'</div>'+
     '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:600;letter-spacing:1px;color:#7CF0B0">PREVISÃO</span><span style="font-size:15px;line-height:1.35">Se venderes tudo o que compraste em '+MESES[S.hoje.getMonth()]+', o mês fecha com <b class="sora" style="color:#3DDC84">~'+eur(S.prev.total,0)+'</b> de lucro</span><span style="font-size:12px;color:#9BA8A3;line-height:1.4">'+eur(S.prev.feito,0)+' já feito · '+eur(S.prev.receber,0)+' a receber · '+eur(S.prev.stock,0)+' em '+S.prev.nS+' por vender'+(S.prev.est?' ('+S.prev.est+' sem preço definido)':'')+'</span></div></div>'+
@@ -596,15 +597,49 @@ function avLimpar(){var lim=iso(add(new Date(),-7)),L=(DATA.avisos||[]).filter(f
   })();
 }
 
+// ---------- MESES EM ABERTO ----------
+function cap1(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+function mesDados(m){var it=(DATA.itens||[]).filter(function(x){return x.m===m}),ent=function(x){return /^(entregue|por enviar)$/i.test(x.e)};
+  var F=it.filter(function(x){return x.v>0&&!ent(x)}),A=it.filter(ent),P=it.filter(function(x){return !(x.v>0)&&!ent(x)});
+  var lf=F.reduce(function(s,x){return s+x.l},0),la=A.reduce(function(s,x){return s+((x.v>0?x.v:(x.pv||0))-x.c)},0),lp=P.length?potencial(P):0;
+  return {m:m,nome:cap1(MESES[Number(m.slice(5,7))-1]),n:it.length,F:F,A:A,P:P,lf:lf,la:la,lp:lp,prev:lf+la+lp,aberto:A.length+P.length>0}}
+function mesesAbertos(S){var atual=S.hoje.getFullYear()+'-'+pad(S.hoje.getMonth()+1),ms={};
+  (DATA.itens||[]).forEach(function(x){if(x.m&&x.m<atual)ms[x.m]=1});
+  var L=Object.keys(ms).sort().reverse().map(mesDados),abertos=L.filter(function(o){return o.aberto}),out='';
+  abertos.forEach(function(o){var nf=o.F.length,pct=o.n?Math.round(nf/o.n*100):0;
+    out+='<a href="#mes/'+o.m+'" style="border-radius:24px;padding:16px 18px;background:linear-gradient(160deg,#1C170B 0%,#111615 65%);border:1px solid rgba(251,191,36,.35);display:flex;flex-direction:column;gap:12px">'+
+      '<div class="hdr"><span style="font-weight:800;font-size:16px">'+o.nome+' <span style="font-size:12px;font-weight:600;color:#FBBF24;margin-left:4px">● em aberto</span></span><span class="muted" style="font-size:12px">ver artigos ›</span></div>'+
+      '<div style="display:flex;flex-direction:column;gap:6px"><div class="hdr"><span class="muted" style="font-size:12px">'+nf+' de '+o.n+' artigos fechados</span><span style="font-size:12px;font-weight:700">'+pct+'%</span></div>'+
+      '<div style="display:flex;gap:2px;height:8px;border-radius:99px;overflow:hidden;background:#1A2321">'+(nf?'<div style="flex:'+nf+';background:#3DDC84"></div>':'')+(o.A.length?'<div style="flex:'+o.A.length+';background:#C084FC"></div>':'')+(o.P.length?'<div style="flex:'+o.P.length+';background:#2A3532"></div>':'')+'</div></div>'+
+      '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'+
+        '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;color:#7CF0B0">Feito</span><span class="sora" style="font-weight:800;font-size:19px">'+eur(o.lf,0)+'</span></div>'+
+        '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;color:#D8B4FE">A caminho</span><span class="sora" style="font-weight:800;font-size:19px">+'+eur(o.la,0)+'</span></div>'+
+        '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px" class="muted">Por vender</span><span class="sora" style="font-weight:800;font-size:19px">~'+eur(o.lp,0)+'</span></div></div>'+
+      '<div class="hdr" style="padding-top:10px;border-top:1px solid #2A2414;align-items:center"><span style="font-size:13px;color:#C9D3CF">Previsão final de '+o.nome.toLowerCase()+'</span><span class="sora" style="font-weight:800;font-size:22px;color:#FBBF24">~'+eur(o.prev,0)+'</span></div></a>'});
+  // o mês anterior, se já fechou, fica numa linha discreta
+  var ant=L[0];if(ant&&!ant.aberto&&ant.m===iso(add(new Date(S.hoje.getFullYear(),S.hoje.getMonth(),1),-1)).slice(0,7))
+    out+='<a href="#mes/'+ant.m+'" class="card" style="border-radius:18px;padding:12px 16px;display:flex;gap:10px;align-items:center;opacity:.7">'+ico(I.check,'#3DDC84',18,2.4)+'<span style="font-size:13px">'+ant.nome+' fechado · <b>'+eur(ant.lf,0)+'</b> de lucro</span></a>';
+  return out}
+function mesLinha(x,tipo){var ce=corEstado(x.e),val=tipo==='A'?(x.v>0?x.v:(x.pv||0))-x.c:null;
+  return '<a href="#a/'+encodeURIComponent(x.r)+'" style="border-radius:16px;padding:12px 14px;background:#111615;border:1px solid #1E2826;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:52px"><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:14px;font-weight:600">'+esc(x.p)+' <span class="muted" style="font-weight:500;font-size:12px">'+esc(x.r)+'</span></span><span style="font-size:12px;color:'+ce[2]+'">'+esc(x.e)+'</span></span><span class="sora" style="font-weight:700;font-size:14px;white-space:nowrap">'+(val!==null?(val<0?'':'+')+eur(val,0):eur(x.c,0))+'</span></a>'}
+function mesPage(S,m){if(!/^\d{4}-\d{2}$/.test(m))return inicio(S);var o=mesDados(m);
+  return '<div class="top"><a href="#" class="back" aria-label="Voltar ao início">'+ico(I.back,'#EEF2F0',20,2.2)+'</a><span class="sora" style="font-weight:700;font-size:18px">'+o.nome+'</span>'+
+    '<span class="chip" style="'+(o.aberto?'background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);color:#FBBF24':'background:rgba(61,220,132,.12);border:1px solid rgba(61,220,132,.35);color:#3DDC84')+'">'+(o.aberto?'em aberto':'fechado')+'</span></div>'+
+  '<div class="hero"><span class="lbl">'+(o.aberto?'PREVISÃO DE LUCRO':'LUCRO FINAL')+'</span><span class="big" style="color:'+(o.aberto?'#FBBF24':'#3DDC84')+'">'+(o.aberto?'~':'')+eur(o.prev,0)+'</span>'+
+    '<span style="font-size:13px" class="muted">'+eur(o.lf,0)+' feito · +'+eur(o.la,0)+' a caminho · ~'+eur(o.lp,0)+' por vender</span></div>'+
+  (o.A.length?'<div class="hdr" style="margin-top:4px"><span class="h2">Vendidos, à espera do dinheiro</span><span style="font-size:12px" class="muted">'+o.A.length+'</span></div>'+o.A.map(function(x){return mesLinha(x,'A')}).join(''):'')+
+  (o.P.length?'<div class="hdr" style="margin-top:4px"><span class="h2">Ainda por vender</span><span style="font-size:12px" class="muted">'+o.P.length+' · custo '+eur(o.P.reduce(function(s,x){return s+x.c},0),0)+'</span></div>'+o.P.map(function(x){return mesLinha(x,'P')}).join(''):'')+
+  (!o.aberto?'<div class="note">'+ico(I.check,'#3DDC84',18)+'<span style="font-size:13px;line-height:1.45;color:#C9D3CF">Todos os '+o.n+' artigos deste mês estão fechados.</span></div>':'')}
+
 // ---------- SEPARADORES + ROUTER ----------
-function tabs(h){var a=h===''||h==='semana'||h==='avisos'?'':h==='ano'?'numeros':h.indexOf('a/')===0?'stock':h;
+function tabs(h){var a=h===''||h==='semana'||h==='avisos'||h.indexOf('mes/')===0?'':h==='ano'?'numeros':h.indexOf('a/')===0?'stock':h;
   var T=[['','Início',I.home],['stock','Stock',I.box],['comprar','Comprar',I.tag],['numeros','Números',I.chart],['nivel','Nível',I.star]];
   return '<nav class="tabs" aria-label="Menu principal"><div>'+T.map(function(t){var on=t[0]===a;return '<a href="#'+t[0]+'"'+(on?' aria-current="page"':'')+' class="tb'+(on?' on':'')+'">'+ico(t[2],'currentColor',22)+t[1]+'</a>'}).join('')+'</div></nav>'}
 function show(keep){
   if(!DATA) return;
   var S=calc(DATA), h=decodeURIComponent((location.hash||'').replace('#','')), html;
   if(h==='stock')html=stock(S);else if(h==='nivel')html=nivel(S);else if(h==='comprar')html=comprar(S);else if(h==='numeros')html=numeros(S);
-  else if(h==='ano')html=ano(S);else if(h==='semana')html=semana(S);else if(h==='avisos')html=avisos(S);else if(h.indexOf('a/')===0)html=artigo(S,h.slice(2));else html=inicio(S);
+  else if(h==='ano')html=ano(S);else if(h==='semana')html=semana(S);else if(h==='avisos')html=avisos(S);else if(h.indexOf('mes/')===0)html=mesPage(S,h.slice(4));else if(h.indexOf('a/')===0)html=artigo(S,h.slice(2));else html=inicio(S);
   document.getElementById('app').innerHTML='<div class="wrap">'+html+'<footer><button type="button" class="upd" onclick="this.textContent=\'A atualizar…\';load()">Atualizado às '+DATA.agora.slice(11,16)+' · tocar para atualizar</button></footer></div>'+tabs(h);
   if(!keep) window.scrollTo(0,0);
   if(h==='comprar')updOf();if(h.indexOf('a/')===0)updArt();
