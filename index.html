@@ -122,9 +122,9 @@ function calc(D){
   function st(k){var a=itens.filter(function(x){return x.m===k}),v=a.filter(function(x){return x.v>0});
     return {a:a,v:v,lucro:v.reduce(function(s,x){return s+x.l},0),fat:v.reduce(function(s,x){return s+x.v},0),inv:a.reduce(function(s,x){return s+x.c},0)}}
   var c=st(key), p=st(pkey), dim=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
-  var meses={}; itens.forEach(function(x){if(x.v>0)meses[x.m]=(meses[x.m]||0)+x.l});
+  var meses={}; itens.forEach(function(x){if(vendido(x))meses[x.m]=(meses[x.m]||0)+x.l});
   var mesMil=Object.keys(meses).some(function(k){return meses[k]>=1000});
-  var cem=itens.filter(function(x){return x.v>0&&x.l>=100}).sort(function(a,b){return b.l-a.l})[0];
+  var cem=itens.filter(function(x){return vendido(x)&&x.l>=100}).sort(function(a,b){return b.l-a.l})[0];
   var best=c.v.slice().sort(function(a,b){return b.l-a.l})[0];
   var nv=itens.filter(function(x){return !(x.v>0)||/^(entregue|por enviar)$/i.test(x.e)}), g={ch:0,ca:0,av:0,en:0,rec:0,luc:0}, parados=[];
   nv.forEach(function(x){var e=x.e.toLowerCase();
@@ -281,10 +281,10 @@ function curto(n){return String(n).trim().replace(/^iphone\s*/i,'').replace(/\s*
 function vendido(x){return x.v>0&&!/^(entregue|por enviar)$/i.test(x.e)}
 function lucroPrev(x,lm){var ent=/^(entregue|por enviar)$/i.test(x.e),vv=x.v>0?x.v:(x.pv||0);
   if(x.v>0&&!ent)return x.l; if(vv>0)return vv-x.c; return precoEst(x,lm)-x.c}
-function lmGeral(){var v=(DATA.itens||[]).filter(function(x){return x.v>0});return v.length?soma(v,function(x){return x.l})/v.length:40}
+function lmGeral(){var v=(DATA.itens||[]).filter(vendido);return v.length?soma(v,function(x){return x.l})/v.length:40}
 
 function grupos(){
-  var g={};(DATA.itens||[]).forEach(function(x){if(!(x.v>0))return;var k=chave(x.p);if(!g[k])g[k]={nome:String(x.p).trim(),a:[]};g[k].a.push(x)});
+  var g={};(DATA.itens||[]).forEach(function(x){if(!vendido(x))return;var k=chave(x.p);if(!g[k])g[k]={nome:String(x.p).trim(),a:[]};g[k].a.push(x)});
   return Object.keys(g).map(function(k){var a=g[k].a,n=a.length,vs=a.map(function(x){return x.v}).sort(function(p,q){return p-q}),custo=soma(a,function(x){return x.c}),tot=soma(a,function(x){return x.l});
     return {k:k,nome:g[k].nome,a:a,n:n,venda:soma(a,function(x){return x.v})/n,med:n%2?vs[(n-1)/2]:(vs[n/2-1]+vs[n/2])/2,pecas:soma(a,function(x){return x.pc||0})/n,
       pct:Math.round(a.filter(function(x){return (x.pc||0)>0}).length/n*100),preco:soma(a,function(x){return x.c-(x.pc||0)})/n,lucro:tot/n,tot:tot,roi:custo>0?tot/custo:0}})
@@ -337,7 +337,7 @@ function updOf(){var el=document.getElementById('ofr');if(!el||!CUR)return;var o
 
 // ---------- NÚMEROS: MODELOS ----------
 function numeros(S){
-  var G=grupos(),its=(DATA.itens||[]).filter(function(x){return x.v>0}),tot=soma(its,function(x){return x.l});
+  var G=grupos(),its=(DATA.itens||[]).filter(vendido),tot=soma(its,function(x){return x.l});
   var main=G.filter(function(g){return g.n>=3}),out=G.filter(function(g){return g.n<3});
   var cores=['#3DDC84','#60A5FA','#FBBF24'],top=main.slice(0,3),resto=tot-soma(top,function(g){return g.tot});
   var bar='',leg='';
@@ -371,7 +371,7 @@ function numeros(S){
 // ---------- NÚMEROS: ANO ----------
 function setMeta(v){UI.meta=v;try{localStorage.setItem('meta',v)}catch(e){}show(true)}
 function ano(S){
-  var its=(DATA.itens||[]).filter(function(x){return x.v>0}),tot=soma(its,function(x){return x.l}),fat=soma(its,function(x){return x.v}),nV=its.length;
+  var its=(DATA.itens||[]).filter(vendido),tot=soma(its,function(x){return x.l}),fat=soma(its,function(x){return x.v}),nV=its.length;
   var Y=S.hoje.getFullYear(),cm=S.hoje.getMonth(),L=[];
   for(var i=0;i<=cm;i++){var k=Y+'-'+pad(i+1);L.push(soma(its.filter(function(x){return x.m===k}),function(x){return x.l}))}
   var prev=S.prev.total,meta=UI.meta,mx=Math.max.apply(null,L.concat([prev,meta]))*1.08,H=160,cols='',labs='',acima=[];
