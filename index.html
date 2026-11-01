@@ -720,9 +720,13 @@ function load(){
     DATA=d; if(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName))return; var y=window.scrollY; show(true); window.scrollTo(0,y);
   }).catch(function(){});
 }
+// Atualiza a app sozinha quando há uma versão nova publicada
+var VERSAO='2026-11-01b';
+function verVersao(){fetch('index.html?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){var m=t.match(/var VERSAO='([^']+)'/);if(!m||m[1]===VERSAO)return;try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}var q=new URLSearchParams(location.search);q.set('v',m[1]);location.replace(location.pathname+'?'+q.toString()+location.hash)}).catch(function(){})}
 load();
+verVersao();
 setInterval(load,300000);
-document.addEventListener('visibilitychange',function(){if(!document.hidden)load()});
+document.addEventListener('visibilitychange',function(){if(!document.hidden){load();verVersao()}});
 </script>
 </body>
 </html>
