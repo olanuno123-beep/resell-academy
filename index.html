@@ -69,7 +69,7 @@ var META=7;
 var DEGRAUS=[7,10,15,20,25,30];
 function alvo(wk){for(var i=0;i<DEGRAUS.length;i++)if(wk<DEGRAUS[i])return DEGRAUS[i];return Math.ceil((wk+1)/5)*5}
 // Preços de venda estimados por modelo (para a previsão). Modelos sem preço: custo + lucro médio do mês.
-var PRECOS={'iphone 11':95,'iphone xr':85,'macbook pro 2019':300,'iphone 11 pro':120,'mac mini':90,'iphone 12':75,'iphone 12 pro':80};
+var PRECOS={'iphone 11':95,'iphone xr':85,'macbook pro 2019':300,'iphone 11 pro':120,'mac mini':90,'iphone 12':115,'iphone 12 pro':80};
 var PRECO_REF={'REF 825':100,'REF 843':200,'REF 848':200};
 function temPreco(x){var k=String(x.p).toLowerCase().replace(/\s+/g,' ').trim();if(typeof LP!=='undefined'&&LP[x.r]!=null)return LP[x.r];return PRECO_REF[x.r]!=null?PRECO_REF[x.r]:(PRECOS[k]!=null?PRECOS[k]:null)}
 function precoEst(x,lm){var p=temPreco(x);return p!=null?p:x.c+lm}
@@ -191,7 +191,8 @@ function inicio(S){
 function potencial(L){var it=DATA.itens||[],nm=function(p){return String(p).toLowerCase().replace(/\s+/g,' ').replace(/(iphone \S+( pro max| pro| mini)?).*/,'$1').trim()},M={},sl=0,sn=0;
   it.forEach(function(x){if(x.v>0&&/^vendido$/i.test(x.e)){var k=nm(x.p);M[k]=M[k]||[0,0];M[k][0]+=x.l;M[k][1]++;sl+=x.l;sn++}});
   var av=sn?sl/sn:40;
-  return L.reduce(function(s,x){var m=M[nm(x.p)];return s+(m&&m[1]>=3?m[0]/m[1]:av)},0)}
+  // 1.º o preço que puseste na ficha (ou na tabela de preços); senão, o lucro médio do modelo
+  return L.reduce(function(s,x){var p=temPreco(x);if(p!=null)return s+(p-x.c);var m=M[nm(x.p)];return s+(m&&m[1]>=3?m[0]/m[1]:av)},0)}
 function stock(S){
   var g=S.g, cards='', nS=g.ch+g.ca+g.av, LS=S.nv.filter(function(x){return !/^(entregue|por enviar)$/i.test(x.e)}), capS=LS.reduce(function(s,x){return s+x.c},0), potS=potencial(LS);
   S.parados.forEach(function(o){var d=o.dias, col=d===null?'#7E8B86':d>21?'#F87171':d>=14?'#FB923C':'#3DDC84', bc=d===null?'#1E2826':d>21?'rgba(248,113,113,.45)':d>=14?'rgba(251,146,60,.4)':'#1E2826';
@@ -721,7 +722,7 @@ function load(){
   }).catch(function(){});
 }
 // Atualiza a app sozinha quando há uma versão nova publicada
-var VERSAO='2026-11-01b';
+var VERSAO='2026-11-02a';
 function verVersao(){fetch('index.html?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){var m=t.match(/var VERSAO='([^']+)'/);if(!m||m[1]===VERSAO)return;try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}var q=new URLSearchParams(location.search);q.set('v',m[1]);location.replace(location.pathname+'?'+q.toString()+location.hash)}).catch(function(){})}
 load();
 verVersao();
