@@ -703,7 +703,7 @@ function chEnviar(ref,acao,btn){var c=CH[ref]||{},t=['ic:'+(c.ic||''),'ec:'+(c.e
 
 // ---------- DINHEIRO TOTAL ----------
 var CT=(function(){try{return JSON.parse(localStorage.getItem('conta'))||{}}catch(e){return {}}})();
-if(CT.xtb==null)CT.xtb=6350;if(CT.meta==null)CT.meta=10000;if(CT.saldo==null)CT.saldo=0;
+if(CT.xtb==null)CT.xtb=6350;if(CT.meta==null)CT.meta=10000;if(CT.saldo==null)CT.saldo=1207.84;
 function ctGuardar(){try{localStorage.setItem('conta',JSON.stringify(CT))}catch(e){}}
 function dinheiro(S){var LS=S.nv.filter(function(x){return !/^(entregue|por enviar)$/i.test(x.e)});
   var inv=LS.reduce(function(s,x){return s+x.c},0),pot=LS.length?potencial(LS):0,rec=S.g.rec,xtb=+CT.xtb||0,saldo=+CT.saldo||0;
@@ -757,7 +757,7 @@ function load(){
   }).catch(function(){});
 }
 // Atualiza a app sozinha quando há uma versão nova publicada
-var VERSAO='2026-11-04b';
+var VERSAO='2026-11-04c';
 function verVersao(){fetch('index.html?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){var m=t.match(/var VERSAO='([^']+)'/);if(!m||m[1]===VERSAO)return;try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}var q=new URLSearchParams(location.search);q.set('v',m[1]);location.replace(location.pathname+'?'+q.toString()+location.hash)}).catch(function(){})}
 load();
 verVersao();
