@@ -167,7 +167,7 @@ function inicio(S){
       '<span style="font-size:13px" class="muted">'+(pct!==null?pct+'% de '+pmn:'primeiro mês')+'</span></div></div>'+
     '<div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:99px;background:#3DDC84"></span><span style="font-size:13px;color:#C9D3CF">Lucro vs '+pmn.slice(0,3)+'.</span></div>'+
     '<div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:99px;background:#FBBF24"></span><span style="font-size:13px;color:#C9D3CF">Compras '+S.wk+'/'+alvo(S.wk)+'</span></div></div>'+(S.wk>=META?'<span style="font-size:13px;font-weight:600;color:#FBBF24;text-align:center">Meta de '+META+' cumprida · próximo desafio: '+alvo(S.wk)+' compras</span>':'<span style="font-size:13px;color:#9BA8A3;text-align:center">Faltam '+(META-S.wk)+' para a meta de '+META+'</span>')+'</div>'+
-  chBanner()+mesesAbertos(S)+
+  dinCard(S)+chBanner()+mesesAbertos(S)+
   '<div style="border-radius:22px;padding:16px 18px;background:rgba(61,220,132,.08);border:1px solid rgba(61,220,132,.3);display:flex;align-items:center;gap:14px">'+
     '<div style="width:44px;height:44px;border-radius:14px;background:rgba(61,220,132,.16);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(I.up,'#3DDC84',22)+'</div>'+
     '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:600;letter-spacing:1px;color:#7CF0B0">PREVISÃO</span><span style="font-size:15px;line-height:1.35">Se venderes tudo o que compraste em '+MESES[S.hoje.getMonth()]+', o mês fecha com <b class="sora" style="color:#3DDC84">~'+eur(S.prev.total,0)+'</b> de lucro</span><span style="font-size:12px;color:#9BA8A3;line-height:1.4">'+eur(S.prev.feito,0)+' já feito · '+eur(S.prev.receber,0)+' a receber · '+eur(S.prev.stock,0)+' em '+S.prev.nS+' por vender'+(S.prev.est?' ('+S.prev.est+' sem preço definido)':'')+'</span></div></div>'+
@@ -701,15 +701,44 @@ function chEnviar(ref,acao,btn){var c=CH[ref]||{},t=['ic:'+(c.ic||''),'ec:'+(c.e
   }).catch(function(e){if(btn){btn.disabled=false;btn.textContent='Tentar outra vez'}if(m)m.textContent=e&&e.message&&e.message!=='Failed to fetch'?'Não deu: '+e.message:'Sem ligação. Tenta outra vez.'});
 }
 
+// ---------- DINHEIRO TOTAL ----------
+var CT=(function(){try{return JSON.parse(localStorage.getItem('conta'))||{}}catch(e){return {}}})();
+if(CT.xtb==null)CT.xtb=6350;if(CT.meta==null)CT.meta=10000;if(CT.saldo==null)CT.saldo=0;
+function ctGuardar(){try{localStorage.setItem('conta',JSON.stringify(CT))}catch(e){}}
+function dinheiro(S){var LS=S.nv.filter(function(x){return !/^(entregue|por enviar)$/i.test(x.e)});
+  var inv=LS.reduce(function(s,x){return s+x.c},0),pot=LS.length?potencial(LS):0,rec=S.g.rec,xtb=+CT.xtb||0,saldo=+CT.saldo||0;
+  return {xtb:xtb,saldo:saldo,rec:rec,inv:inv,pot:pot,tot:xtb+saldo+rec+inv+pot,meta:+CT.meta||10000}}
+function dinBarra(f,h){return '<div style="height:'+h+'px;border-radius:99px;background:#1A2321;overflow:hidden"><div style="width:'+(f*100)+'%;height:'+h+'px;border-radius:99px;background:linear-gradient(90deg,#60A5FA,#3DDC84)"></div></div>'}
+function dinCard(S){var o=dinheiro(S),f=Math.min(1,o.tot/o.meta);
+  return '<a href="#dinheiro" style="border-radius:22px;padding:16px 18px;background:linear-gradient(160deg,#0E1A2A 0%,#111615 70%);border:1px solid rgba(96,165,250,.35);display:flex;flex-direction:column;gap:10px">'+
+    '<div class="hdr"><span class="lbl">DINHEIRO TOTAL</span><span class="muted" style="font-size:12px">objetivo '+eur(o.meta,0)+' ›</span></div>'+
+    '<div class="hdr" style="align-items:baseline"><span class="sora" style="font-weight:800;font-size:28px;letter-spacing:-.5px">'+eur(o.tot,0)+'</span><span style="font-size:14px;font-weight:700;color:#93C5FD">'+Math.round(f*100)+'%</span></div>'+
+    dinBarra(f,8)+'<span class="muted" style="font-size:12px">'+(o.tot>=o.meta?'Objetivo cumprido!':'Faltam '+eur(o.meta-o.tot,0)+' para o objetivo')+'</span></a>'}
+function dinPage(S){var o=dinheiro(S),f=Math.min(1,o.tot/o.meta);
+  var row=function(t,v,sub,cor){return '<div class="hdr" style="align-items:center;padding:12px 0;border-top:1px solid #1A2321;gap:10px"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">'+t+'</span>'+(sub?'<span class="muted" style="font-size:12px">'+sub+'</span>':'')+'</span><span class="sora" style="font-weight:700;font-size:16px;white-space:nowrap'+(cor?';color:'+cor:'')+'">'+v+'</span></div>'};
+  var inp=function(id,lab,val){return '<div class="tile"><label for="'+id+'" style="font-size:12px" class="muted">'+lab+'</label><div style="display:flex;align-items:center;gap:6px"><input id="'+id+'" class="inp" inputmode="decimal" value="'+String(val).replace('.',',')+'" onchange="dinSet(\''+id+'\',this.value)"><span class="muted">€</span></div></div>'};
+  return '<div class="top"><a href="#" class="back" aria-label="Voltar ao início">'+ico(I.back,'#EEF2F0',20,2.2)+'</a><span class="sora" style="font-weight:700;font-size:18px">Dinheiro total</span><span style="width:44px"></span></div>'+
+  '<div class="hero"><span class="lbl">TUDO JUNTO</span><span class="big">'+eur(o.tot,0)+'</span>'+dinBarra(f,10)+
+    '<span style="font-size:13px;margin-top:4px" class="muted">'+Math.round(f*100)+'% do objetivo de '+eur(o.meta,0)+(o.tot<o.meta?' · faltam '+eur(o.meta-o.tot,0):' · cumprido!')+'</span></div>'+
+  '<div class="card" style="display:flex;flex-direction:column;padding:4px 18px">'+
+    row('XTB',eur(o.xtb,0),'escreves tu, em baixo')+
+    row('Saldo na Vinted',eur(o.saldo,0),'dinheiro já disponível na carteira')+
+    row('A receber da Vinted',eur(o.rec,0),'vendidos, à espera do dinheiro','#D8B4FE')+
+    row('Investido em stock',eur(o.inv,0),'o que pagaste pelos iPhones por vender')+
+    row('Lucro potencial do stock','+'+eur(o.pot,0),'estimativa, se venderes tudo','#3DDC84')+'</div>'+
+  '<div class="g2">'+inp('cxtb','XTB',o.xtb)+inp('csaldo','Saldo na Vinted',o.saldo)+'</div>'+inp('cmeta','Objetivo para 2026',o.meta)+
+  '<div class="note">'+ico(I.warn,'#7E8B86',18)+'<span style="font-size:13px;line-height:1.45;color:#C9D3CF">O XTB e o saldo da Vinted não chegam por email: atualiza-os aqui quando mudarem. O resto atualiza-se sozinho com a folha.</span></div>'}
+function dinSet(id,v){var n=num(v);if(n==null)return;if(id==='cxtb')CT.xtb=n;else if(id==='csaldo')CT.saldo=n;else if(id==='cmeta')CT.meta=n;ctGuardar();show(true)}
+
 // ---------- SEPARADORES + ROUTER ----------
-function tabs(h){var a=h===''||h==='semana'||h==='avisos'||h.indexOf('mes/')===0||h==='chegadas'||h.indexOf('chegou/')===0?'':h==='ano'?'numeros':h.indexOf('a/')===0?'stock':h;
+function tabs(h){var a=h===''||h==='semana'||h==='avisos'||h.indexOf('mes/')===0||h==='chegadas'||h==='dinheiro'||h.indexOf('chegou/')===0?'':h==='ano'?'numeros':h.indexOf('a/')===0?'stock':h;
   var T=[['','Início',I.home],['stock','Stock',I.box],['comprar','Comprar',I.tag],['numeros','Números',I.chart],['nivel','Nível',I.star]];
   return '<nav class="tabs" aria-label="Menu principal"><div>'+T.map(function(t){var on=t[0]===a;return '<a href="#'+t[0]+'"'+(on?' aria-current="page"':'')+' class="tb'+(on?' on':'')+'">'+ico(t[2],'currentColor',22)+t[1]+'</a>'}).join('')+'</div></nav>'}
 function show(keep){
   if(!DATA) return;
   var S=calc(DATA), h=decodeURIComponent((location.hash||'').replace('#','')), html;
   if(h==='stock')html=stock(S);else if(h==='nivel')html=nivel(S);else if(h==='comprar')html=comprar(S);else if(h==='numeros')html=numeros(S);
-  else if(h==='ano')html=ano(S);else if(h==='semana')html=semana(S);else if(h==='avisos')html=avisos(S);else if(h.indexOf('mes/')===0)html=mesPage(S,h.slice(4));else if(h==='chegadas')html=chegadas(S);else if(h.indexOf('chegou/')===0)html=chegou(S,h.slice(7));else if(h.indexOf('a/')===0)html=artigo(S,h.slice(2));else html=inicio(S);
+  else if(h==='ano')html=ano(S);else if(h==='semana')html=semana(S);else if(h==='avisos')html=avisos(S);else if(h.indexOf('mes/')===0)html=mesPage(S,h.slice(4));else if(h==='chegadas')html=chegadas(S);else if(h==='dinheiro')html=dinPage(S);else if(h.indexOf('chegou/')===0)html=chegou(S,h.slice(7));else if(h.indexOf('a/')===0)html=artigo(S,h.slice(2));else html=inicio(S);
   document.getElementById('app').innerHTML='<div class="wrap">'+html+'<footer><button type="button" class="upd" onclick="this.textContent=\'A atualizar…\';load()">Atualizado às '+DATA.agora.slice(11,16)+' · tocar para atualizar</button></footer></div>'+tabs(h);
   if(!keep) window.scrollTo(0,0);
   if(h==='comprar')updOf();if(h.indexOf('a/')===0)updArt();
@@ -728,7 +757,7 @@ function load(){
   }).catch(function(){});
 }
 // Atualiza a app sozinha quando há uma versão nova publicada
-var VERSAO='2026-11-04a';
+var VERSAO='2026-11-04b';
 function verVersao(){fetch('index.html?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){var m=t.match(/var VERSAO='([^']+)'/);if(!m||m[1]===VERSAO)return;try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}var q=new URLSearchParams(location.search);q.set('v',m[1]);location.replace(location.pathname+'?'+q.toString()+location.hash)}).catch(function(){})}
 load();
 verVersao();
