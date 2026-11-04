@@ -704,11 +704,12 @@ function chEnviar(ref,acao,btn){var c=CH[ref]||{},t=['ic:'+(c.ic||''),'ec:'+(c.e
 
 // ---------- DINHEIRO TOTAL ----------
 var CT=(function(){try{return JSON.parse(localStorage.getItem('conta'))||{}}catch(e){return {}}})();
-if(CT.xtb==null)CT.xtb=6350;if(CT.meta==null)CT.meta=10000;if(CT.saldo==null)CT.saldo=1207.84;
+if(CT.xtb==null)CT.xtb=6350;if(CT.meta==null||+CT.meta===10000)CT.meta=12500;if(CT.saldo==null)CT.saldo=1207.84;
 function ctGuardar(){try{localStorage.setItem('conta',JSON.stringify(CT))}catch(e){}}
 function dinheiro(S){var LS=S.nv.filter(function(x){return !/^(entregue|por enviar)$/i.test(x.e)});
   var inv=LS.reduce(function(s,x){return s+x.c},0),pot=LS.length?potencial(LS):0,rec=S.g.rec,xtb=+CT.xtb||0,saldo=+CT.saldo||0;
-  return {xtb:xtb,saldo:saldo,rec:rec,inv:inv,pot:pot,tot:xtb+saldo+rec+inv+pot,meta:+CT.meta||10000}}
+  var tot=xtb+saldo+rec+inv+pot,meta=+CT.meta||12500;while(tot>=meta)meta+=2500; // quando atinges o objetivo, sobe 2 500 €
+  return {xtb:xtb,saldo:saldo,rec:rec,inv:inv,pot:pot,tot:tot,meta:meta}}
 function dinBarra(f,h){return '<div style="height:'+h+'px;border-radius:99px;background:#1A2321;overflow:hidden"><div style="width:'+(f*100)+'%;height:'+h+'px;border-radius:99px;background:linear-gradient(90deg,#60A5FA,#3DDC84)"></div></div>'}
 function dinCard(S){var o=dinheiro(S),f=Math.min(1,o.tot/o.meta);
   return '<a href="#dinheiro" style="border-radius:22px;padding:16px 18px;background:linear-gradient(160deg,#0E1A2A 0%,#111615 70%);border:1px solid rgba(96,165,250,.35);display:flex;flex-direction:column;gap:10px">'+
@@ -727,7 +728,7 @@ function dinPage(S){var o=dinheiro(S),f=Math.min(1,o.tot/o.meta);
     row('A receber da Vinted',eur(o.rec,0),'vendidos, à espera do dinheiro','#D8B4FE')+
     row('Investido em stock',eur(o.inv,0),'o que pagaste pelos iPhones por vender')+
     row('Lucro potencial do stock','+'+eur(o.pot,0),'estimativa, se venderes tudo','#3DDC84')+'</div>'+
-  '<div class="g2">'+inp('cxtb','XTB',o.xtb)+inp('csaldo','Saldo na Vinted',o.saldo)+'</div>'+inp('cmeta','Objetivo para 2026',o.meta)+
+  '<div class="g2">'+inp('cxtb','XTB',o.xtb)+inp('csaldo','Saldo na Vinted',o.saldo)+'</div>'+inp('cmeta','Objetivo (sobe 2 500 € sempre que o atinges)',o.meta)+
   '<div class="note">'+ico(I.warn,'#7E8B86',18)+'<span style="font-size:13px;line-height:1.45;color:#C9D3CF">O XTB e o saldo da Vinted não chegam por email: atualiza-os aqui quando mudarem. O resto atualiza-se sozinho com a folha.</span></div>'}
 function dinSet(id,v){var n=num(v);if(n==null)return;if(id==='cxtb')CT.xtb=n;else if(id==='csaldo')CT.saldo=n;else if(id==='cmeta')CT.meta=n;ctGuardar();show(true)}
 
@@ -758,7 +759,7 @@ function load(){
   }).catch(function(){});
 }
 // Atualiza a app sozinha quando há uma versão nova publicada
-var VERSAO='2026-11-04f';
+var VERSAO='2026-11-04g';
 function verVersao(){fetch('index.html?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){var m=t.match(/var VERSAO='([^']+)'/);if(!m||m[1]===VERSAO)return;try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}var q=new URLSearchParams(location.search);q.set('v',m[1]);location.replace(location.pathname+'?'+q.toString()+location.hash)}).catch(function(){})}
 load();
 verVersao();
