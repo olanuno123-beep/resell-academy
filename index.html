@@ -65,8 +65,9 @@ input::placeholder{color:#7E8B86}
 var API='https://script.google.com/macros/s/AKfycbxGgQQ56FQnRyI_j4GsTRYlJP9y42Ts1y--1hw29EF6D2jv8tETrpol9VHBfGPCAFbs/exec';
 var K=(location.search.match(/[?&]k=([^&]+)/)||[])[1];
 try{if(K)localStorage.setItem('k',K);else K=localStorage.getItem('k')}catch(e){}
-var META=7;
-var DEGRAUS=[7,10,15,20,25,30];
+var META=10; // meta da semana desde 2 nov 2026 (antes era 7)
+var DEGRAUS=[10,15,20,25,30];
+function metaDe(d){return iso(d)<'2026-11-02'?7:META} // semanas antigas continuam a contar com a meta de 7
 function alvo(wk){for(var i=0;i<DEGRAUS.length;i++)if(wk<DEGRAUS[i])return DEGRAUS[i];return Math.ceil((wk+1)/5)*5}
 // Preços de venda estimados por modelo (para a previsão). Modelos sem preço: custo + lucro médio do mês.
 var PRECOS={'iphone 11':97,'iphone xr':85,'macbook pro 2019':300,'iphone 11 pro':120,'mac mini':90,'iphone 12':117.5,'iphone 12 pro':80};
@@ -113,10 +114,10 @@ function calc(D){
   var m=seg(hoje), wk=0;
   for(var i=0;i<7;i++){var di=iso(add(m,i)); if(di<=t) wk+=cnt[di]||0}
   function semana(mm){var q=0;for(var j=0;j<7;j++)q+=cnt[iso(add(mm,j))]||0;return q}
-  var ss=0,w=1; while(semana(add(m,-7*w))>=META){ss++;w++} if(wk>=META) ss++;
+  var ss=0,w=1; while(semana(add(m,-7*w))>=metaDe(add(m,-7*w))){ss++;w++} if(wk>=META) ss++;
   var rows=[],best6=0; for(var x=6;x>=1;x--){var mm=add(m,-7*x),q=semana(mm);rows.push({m:mm,p:q});if(q>best6)best6=q}
   var datas=Object.keys(cnt).sort(), bestAll=wk, metaAlguma=wk>=META;
-  if(datas.length){for(var s=seg(parse(datas[0]));s<m;s=add(s,7)){var q2=semana(s);if(q2>bestAll)bestAll=q2;if(q2>=META)metaAlguma=true}}
+  if(datas.length){for(var s=seg(parse(datas[0]));s<m;s=add(s,7)){var q2=semana(s);if(q2>bestAll)bestAll=q2;if(q2>=metaDe(s))metaAlguma=true}}
   var key=hoje.getFullYear()+'-'+pad(hoje.getMonth()+1), pmD=new Date(hoje.getFullYear(),hoje.getMonth()-1,1), pkey=pmD.getFullYear()+'-'+pad(pmD.getMonth()+1);
   var itens=D.itens||[];
   function st(k){var a=itens.filter(function(x){return x.m===k}),v=a.filter(function(x){return x.v>0});
@@ -150,7 +151,7 @@ function inicio(S){
   var f1=S.p.lucro>0?Math.min(1,c.lucro/S.p.lucro):(c.lucro>0?1:0), f2=Math.min(1,S.wk/alvo(S.wk));
   var pct=S.p.lucro>0?Math.round(c.lucro/S.p.lucro*100):null, pmn=MESES[S.pm.getMonth()];
   var H=110, hmax=Math.max(S.best6,META,1), bars='', lbls='';
-  S.rows.forEach(function(r){var ok=r.p>=META, top=r.p===S.best6&&ok;
+  S.rows.forEach(function(r){var ok=r.p>=metaDe(r.m), top=r.p===S.best6&&ok;
     bars+='<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%"><span style="font-size:12px;'+(ok?'font-weight:600;color:#FBBF24':'color:#9BA8A3')+'">'+r.p+'</span><div style="width:100%;height:'+Math.max(6,r.p/hmax*H)+'px;border-radius:8px;background:'+(ok?'linear-gradient(180deg,#FCD34D,#D97706)':'#26302D')+(top?';box-shadow:0 0 24px rgba(251,191,36,.35)':'')+'"></div></div>';
     lbls+='<span>'+pad(r.m.getDate())+'/'+pad(r.m.getMonth()+1)+'</span>'});
   var metaY=META/hmax*H;
@@ -243,7 +244,7 @@ function nivel(S){
     {on:S.ss>=3,i:I.fire,c:'#FB923C',bg:'#2A1A0C',bd:'#3A2614',tc:'#C9B8A8',t:'Em chamas',d:S.ss+' semanas seguidas na meta',dl:'3 semanas seguidas na meta'},
     {on:S.c.v.length>=10,i:I.check,c:'#C084FC',bg:'#1E1430',bd:'#3B2A55',tc:'#BBA9D1',t:'Dez no mês',d:S.c.v.length+' vendas em '+mes,dl:'10+ vendas num mês'},
     {on:!!S.cem,i:I.crown,c:'#F472B6',bg:'#2A0F1E',bd:'#4A1D36',tc:'#D9A8C2',t:'Cem limpos',d:S.cem?'+'+eur(S.cem.l)+' num '+esc(S.cem.p):'',dl:'Uma venda com +100 € de lucro'},
-    {on:S.metaAlguma,i:I.target,c:'#60A5FA',bg:'#0C1A2A',bd:'#1D3550',tc:'#A9C1DB',t:'Meta cumprida',d:'7 compras numa semana',dl:'7 compras numa semana'},
+    {on:S.metaAlguma,i:I.target,c:'#60A5FA',bg:'#0C1A2A',bd:'#1D3550',tc:'#A9C1DB',t:'Meta cumprida',d:'meta da semana atingida',dl:'meta da semana atingida'},
     {on:S.mesMil,i:I.star,c:'#FDE68A',bg:'#2A2409',bd:'#4A4012',tc:'#D6C98E',t:'Mês de mil',d:'1 000 € de lucro num mês',dl:'1 000 € de lucro num só mês'}
   ];
   var nOn=A.filter(function(a){return a.on}).length, cards='';
@@ -430,7 +431,7 @@ function semana(S){
   var inv=soma(its,function(x){return x.c}),prevs=its.map(function(x){return {x:x,p:lucroPrev(x,lm)}}),pt=soma(prevs,function(o){return o.p});
   var ent=its.filter(function(x){return x.v>0||/^(entregue|por enviar)$/i.test(x.e)}).length,cheg=its.filter(function(x){return !(x.v>0)&&!/pe[çc]as/i.test(x.e)&&/enviado|espera|levantar/i.test(x.e)}).length;
   prevs.sort(function(a,b){return b.p-a.p});var best=prevs[0],worst=prevs[prevs.length-1];
-  var ssAnt=S.ss-(S.wk>=META?1:0),ok=nC>=META;
+  var MS=metaDe(ini),ssAnt=S.ss-(S.wk>=META?1:0),ok=nC>=MS;
   var LET=['S','T','Q','Q','S','S','D'],bars='',lb='';
   dias.forEach(function(v,i){bars+='<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:12px;font-weight:600">'+v+'</span><div style="width:100%;height:'+Math.max(6,v/dmx*64)+'px;border-radius:8px;background:'+(v?'#3DDC84':'#26302D')+'"></div></div>';lb+='<span>'+LET[i]+'</span>'});
   // foco
@@ -445,8 +446,8 @@ function semana(S){
   return '<div class="glow" style="top:-150px;left:-70px;background:radial-gradient(closest-side,rgba(251,191,36,.16),rgba(251,191,36,0) 70%)"></div>'+
   '<div class="top"><a href="#" class="back" aria-label="Voltar ao início">'+ico(I.back,'#EEF2F0',20,2.2)+'</a><h1 class="sora" style="font-weight:700;font-size:18px">Resumo da semana</h1><span style="width:44px"></span></div>'+
   '<span style="align-self:center;padding:6px 14px;border-radius:999px;background:#111615;border:1px solid #1E2826;font-size:13px;font-weight:600;color:#C9D3CF">'+ini.getDate()+' a '+dd(add(m0,-1))+'</span>'+
-  '<div class="hero"><span class="lbl">COMPRAS DA SEMANA</span><div style="display:flex;align-items:baseline;gap:6px"><span class="sora" style="font-weight:800;font-size:56px;letter-spacing:-2px;line-height:1">'+nC+'</span><span class="sora muted" style="font-weight:700;font-size:24px">/ '+META+'</span></div>'+
-    '<div class="hdr"><span style="font-size:15px;font-weight:600;color:'+(ok?'#3DDC84':'#FBBF24')+'">'+(ok?'Meta cumprida'+(nC>META?' · +'+(nC-META):''):'Faltaram '+(META-nC))+'</span><span style="font-size:12px" class="muted">semana anterior: '+ant+'</span></div>'+
+  '<div class="hero"><span class="lbl">COMPRAS DA SEMANA</span><div style="display:flex;align-items:baseline;gap:6px"><span class="sora" style="font-weight:800;font-size:56px;letter-spacing:-2px;line-height:1">'+nC+'</span><span class="sora muted" style="font-weight:700;font-size:24px">/ '+MS+'</span></div>'+
+    '<div class="hdr"><span style="font-size:15px;font-weight:600;color:'+(ok?'#3DDC84':'#FBBF24')+'">'+(ok?'Meta cumprida'+(nC>MS?' · +'+(nC-MS):''):'Faltaram '+(MS-nC))+'</span><span style="font-size:12px" class="muted">semana anterior: '+ant+'</span></div>'+
     '<div role="img" aria-label="Compras por dia" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;margin-top:14px">'+bars+'</div><div aria-hidden="true" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;text-align:center;font-size:11px;color:#7E8B86;margin-top:2px">'+lb+'</div></div>'+
   '<div style="border-radius:22px;padding:16px;background:linear-gradient(160deg,#2A1A0C 0%,#141110 70%);border:1px solid #3A2614;display:flex;align-items:center;gap:14px">'+ico(I.fire,'#FB923C',30)+'<span class="sora" style="font-weight:800;font-size:30px;letter-spacing:-1px">'+ssAnt+'</span><span style="font-size:13px;color:#C9B8A8">'+(ssAnt===1?'semana na meta':'semanas seguidas na meta')+'</span></div>'+
   '<div class="card" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px">'+
@@ -759,7 +760,7 @@ function load(){
   }).catch(function(){});
 }
 // Atualiza a app sozinha quando há uma versão nova publicada
-var VERSAO='2026-11-04g';
+var VERSAO='2026-11-06a';
 function verVersao(){fetch('index.html?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){var m=t.match(/var VERSAO='([^']+)'/);if(!m||m[1]===VERSAO)return;try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}var q=new URLSearchParams(location.search);q.set('v',m[1]);location.replace(location.pathname+'?'+q.toString()+location.hash)}).catch(function(){})}
 load();
 verVersao();
