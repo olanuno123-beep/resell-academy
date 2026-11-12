@@ -72,6 +72,8 @@ function alvo(wk){for(var i=0;i<DEGRAUS.length;i++)if(wk<DEGRAUS[i])return DEGRA
 // Preços de venda estimados por modelo (para a previsão). Modelos sem preço: custo + lucro médio do mês.
 var PRECOS={'iphone 11':97,'iphone xr':85,'macbook pro 2019':300,'iphone 11 pro':120,'mac mini':90,'iphone 12':117.5,'iphone 12 pro':80};
 var PRECO_REF={'REF 825':100,'REF 843':200,'REF 848':200,'REF 882':210};
+// 12/11: fora do lucro potencial (provavelmente não chega: Vinted Go + vendedor sem avaliações)
+var FORA_PREV={'REF 882':1};
 function temPreco(x){var k=String(x.p).toLowerCase().replace(/\s+/g,' ').trim();if(typeof LP!=='undefined'&&LP[x.r]!=null)return LP[x.r];return PRECO_REF[x.r]!=null?PRECO_REF[x.r]:(PRECOS[k]!=null?PRECOS[k]:null)}
 function precoEst(x,lm){var p=temPreco(x);return p!=null?p:x.c+lm}
 var MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -139,7 +141,7 @@ function calc(D){
 }
 function prevCalc(c){
   var lm=c.v.length?c.lucro/c.v.length:40, feito=0, receber=0, stockL=0, nS=0, est=0;
-  c.a.forEach(function(x){ var ent=/^(entregue|por enviar)$/i.test(x.e);
+  c.a.forEach(function(x){ if(FORA_PREV[x.r])return; var ent=/^(entregue|por enviar)$/i.test(x.e);
     if(ent){var vv=x.v>0?x.v:(x.pv||0); if(vv>0){receber+=vv-x.c;return}}
     if(x.v>0){feito+=x.l;return}
     if(temPreco(x)==null) est++; stockL+=precoEst(x,lm)-x.c; nS++ });
@@ -288,7 +290,7 @@ function soma(a,f){return a.reduce(function(s,x){return s+f(x)},0)}
 function chave(p){return String(p).trim().toLowerCase().replace(/\s+/g,' ')}
 function curto(n){return String(n).trim().replace(/^iphone\s*/i,'').replace(/\s*\((.+)\)/,' → $1').replace(/\bpro\b/g,'Pro').replace(/\bmax\b/g,'Max')}
 function vendido(x){return x.v>0&&!/^(entregue|por enviar)$/i.test(x.e)}
-function lucroPrev(x,lm){var ent=/^(entregue|por enviar)$/i.test(x.e),vv=x.v>0?x.v:(x.pv||0);
+function lucroPrev(x,lm){if(FORA_PREV[x.r])return 0;var ent=/^(entregue|por enviar)$/i.test(x.e),vv=x.v>0?x.v:(x.pv||0);
   if(x.v>0&&!ent)return x.l; if(vv>0)return vv-x.c; return precoEst(x,lm)-x.c}
 function lmGeral(){var v=(DATA.itens||[]).filter(vendido);return v.length?soma(v,function(x){return x.l})/v.length:40}
 
@@ -760,7 +762,7 @@ function load(){
   }).catch(function(){});
 }
 // Atualiza a app sozinha quando há uma versão nova publicada
-var VERSAO='2026-11-08a';
+var VERSAO='2026-11-12a';
 function verVersao(){fetch('index.html?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){var m=t.match(/var VERSAO='([^']+)'/);if(!m||m[1]===VERSAO)return;try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}var q=new URLSearchParams(location.search);q.set('v',m[1]);location.replace(location.pathname+'?'+q.toString()+location.hash)}).catch(function(){})}
 load();
 verVersao();
