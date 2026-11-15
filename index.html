@@ -122,7 +122,7 @@ function calc(D){
   if(datas.length){for(var s=seg(parse(datas[0]));s<m;s=add(s,7)){var q2=semana(s);if(q2>bestAll)bestAll=q2;if(q2>=metaDe(s))metaAlguma=true}}
   var key=hoje.getFullYear()+'-'+pad(hoje.getMonth()+1), pmD=new Date(hoje.getFullYear(),hoje.getMonth()-1,1), pkey=pmD.getFullYear()+'-'+pad(pmD.getMonth()+1);
   var itens=D.itens||[];
-  function st(k){var a=itens.filter(function(x){return x.m===k}),v=a.filter(function(x){return x.v>0});
+  function st(k){var a=itens.filter(function(x){return x.m===k}),v=a.filter(function(x){return x.v>0&&!/^reembolsado$/i.test(x.e)});
     return {a:a,v:v,lucro:v.reduce(function(s,x){return s+x.l},0),fat:v.reduce(function(s,x){return s+x.v},0),inv:a.reduce(function(s,x){return s+x.c},0)}}
   var c=st(key), p=st(pkey), dim=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
   var meses={}; itens.forEach(function(x){if(vendido(x))meses[x.m]=(meses[x.m]||0)+x.l});
@@ -289,7 +289,7 @@ function num(v){var n=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(
 function soma(a,f){return a.reduce(function(s,x){return s+f(x)},0)}
 function chave(p){return String(p).trim().toLowerCase().replace(/\s+/g,' ')}
 function curto(n){return String(n).trim().replace(/^iphone\s*/i,'').replace(/\s*\((.+)\)/,' → $1').replace(/\bpro\b/g,'Pro').replace(/\bmax\b/g,'Max')}
-function vendido(x){return x.v>0&&!/^(entregue|por enviar)$/i.test(x.e)}
+function vendido(x){return x.v>0&&!/^(entregue|por enviar|reembolsado)$/i.test(x.e)}
 function lucroPrev(x,lm){if(FORA_PREV[x.r])return 0;var ent=/^(entregue|por enviar)$/i.test(x.e),vv=x.v>0?x.v:(x.pv||0);
   if(x.v>0&&!ent)return x.l; if(vv>0)return vv-x.c; return precoEst(x,lm)-x.c}
 function lmGeral(){var v=(DATA.itens||[]).filter(vendido);return v.length?soma(v,function(x){return x.l})/v.length:40}
@@ -762,7 +762,7 @@ function load(){
   }).catch(function(){});
 }
 // Atualiza a app sozinha quando há uma versão nova publicada
-var VERSAO='2026-11-15b';
+var VERSAO='2026-11-15c';
 function verVersao(){fetch('index.html?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){var m=t.match(/var VERSAO='([^']+)'/);if(!m||m[1]===VERSAO)return;try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}var q=new URLSearchParams(location.search);q.set('v',m[1]);location.replace(location.pathname+'?'+q.toString()+location.hash)}).catch(function(){})}
 load();
 verVersao();
