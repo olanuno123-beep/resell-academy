@@ -197,10 +197,20 @@ function potencial(L){var it=DATA.itens||[],nm=function(p){return String(p).toLo
   // 1.º o preço que puseste na ficha (ou na tabela de preços); senão, o lucro médio do modelo
   return L.reduce(function(s,x){var p=temPreco(x);if(p!=null)return s+(p-x.c);var m=M[nm(x.p)];return s+(m&&m[1]>=3?m[0]/m[1]:av)},0)}
 // Ecrãs em stock (lotes; o script gasta o mais antigo primeiro)
-function pecasHTML(){var L=DATA.lotes||{},linhas=[];Object.keys(L).forEach(function(m){var vivos=((L[m]||{}).E||[]).filter(function(x){return x.n>0}),tot=vivos.reduce(function(s,x){return s+x.n},0);
-  linhas.push('<div class="hdr" style="align-items:center;padding:8px 0;border-top:1px solid #1A2321"><span style="font-size:14px">'+esc(m.replace('iphone','iPhone').replace('xr','XR'))+'</span><span style="font-size:13px;text-align:right">'+(tot?vivos.map(function(x){return '<b>'+x.n+'</b> a '+eur(x.v)}).join(' · '):'<span style="color:#FCA5A5">sem stock</span>')+'</span></div>')});
+function pecasHTML(){var L=DATA.lotes||{},P=DATA.precisos||{},ms=Object.keys(L),linhas=[];
+  ['iphone 11','iphone xr'].forEach(function(m){if(ms.indexOf(m)<0)ms.push(m)});
+  var bt='width:38px;height:38px;border-radius:12px;background:#1A2321;border:1px solid #2A3532;color:#EEF2F0;font-size:20px;font-weight:700;line-height:1;cursor:pointer';
+  ms.forEach(function(m){var vivos=((L[m]||{}).E||[]).filter(function(x){return x.n>0}),tot=vivos.reduce(function(s,x){return s+x.n},0);
+    var h='<div class="hdr" style="align-items:center;padding:8px 0 4px;border-top:1px solid #1A2321"><span style="font-size:14px">'+esc(m.replace('iphone','iPhone').replace('xr','XR'))+'</span><span style="font-size:13px;text-align:right">'+(tot?vivos.map(function(x){return '<b>'+x.n+'</b> a '+eur(x.v)}).join(' · '):'<span style="color:#FCA5A5">sem stock</span>')+'</span></div>';
+    if(P[m]!=null){var pr=P[m]||0,falta=pr-tot;
+      h+='<div class="hdr" style="align-items:center;padding:2px 0 10px"><span class="muted" style="font-size:13px">Vou precisar: <b style="color:#EEF2F0">'+pr+'</b>'+(pr?(falta>0?' · <span style="color:#FCA5A5;font-weight:600">faltam '+falta+'</span>':' · <span style="color:#3DDC84">tens que chegue</span>'):'')+'</span>'+
+        '<span style="display:flex;gap:8px"><button aria-label="Menos um ecrã" onclick="ecraMais(\''+m+'\',-1)" style="'+bt+'">−</button><button aria-label="Mais um ecrã" onclick="ecraMais(\''+m+'\',1)" style="'+bt+';background:rgba(61,220,132,.16);border-color:rgba(61,220,132,.4);color:#3DDC84">+</button></span></div>'}
+    linhas.push(h)});
   if(!linhas.length)return '';
-  return '<div class="card" style="display:flex;flex-direction:column;padding:12px 16px"><div class="hdr" style="margin-bottom:4px"><span class="h2" style="font-size:15px">Ecrãs em stock</span><span class="muted" style="font-size:12px">gasta os mais antigos primeiro</span></div>'+linhas.join('')+'</div>'}
+  return '<div class="card" style="display:flex;flex-direction:column;padding:12px 16px"><div class="hdr" style="margin-bottom:4px"><span class="h2" style="font-size:15px">Ecrãs</span><span class="muted" style="font-size:12px">stock · gasta os mais antigos primeiro</span></div>'+linhas.join('')+'<span class="muted" style="font-size:11px;padding-top:2px">Carrega em + quando comprares um iPhone que precisa de ecrã. Desce sozinho quando um ecrã é usado.</span></div>'}
+// 17/11: + / − nos ecrãs que vou precisar (fica guardado na folha)
+function ecraMais(m,d){DATA.precisos=DATA.precisos||{};DATA.precisos[m]=Math.max(0,(DATA.precisos[m]||0)+d);show(true);
+  fetch(API+'?k='+encodeURIComponent(K)+'&f=ecras&m='+encodeURIComponent(m)+'&d='+d).then(function(r){return r.json()}).then(function(x){if(x&&x.ok){DATA.precisos=x.precisos;try{localStorage.setItem('d',JSON.stringify(DATA))}catch(e){}show(true)}}).catch(function(){})}
 function stock(S){
   var g=S.g, cards='', nS=g.ch+g.ca+g.av, LS=S.nv.filter(function(x){return !/^(entregue|por enviar)$/i.test(x.e)}), capS=LS.reduce(function(s,x){return s+x.c},0), potS=potencial(LS);
   S.parados.forEach(function(o){var d=o.dias, col=d===null?'#7E8B86':d>21?'#F87171':d>=14?'#FB923C':'#3DDC84', bc=d===null?'#1E2826':d>21?'rgba(248,113,113,.45)':d>=14?'rgba(251,146,60,.4)':'#1E2826';
@@ -762,7 +772,7 @@ function load(){
   }).catch(function(){});
 }
 // Atualiza a app sozinha quando há uma versão nova publicada
-var VERSAO='2026-11-15c';
+var VERSAO='2026-11-17a';
 function verVersao(){fetch('index.html?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){var m=t.match(/var VERSAO='([^']+)'/);if(!m||m[1]===VERSAO)return;try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}var q=new URLSearchParams(location.search);q.set('v',m[1]);location.replace(location.pathname+'?'+q.toString()+location.hash)}).catch(function(){})}
 load();
 verVersao();
