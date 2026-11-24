@@ -70,8 +70,8 @@ var DEGRAUS=[10,15,20,25,30];
 function metaDe(d){return iso(d)<'2026-11-02'?7:META} // semanas antigas continuam a contar com a meta de 7
 function alvo(wk){for(var i=0;i<DEGRAUS.length;i++)if(wk<DEGRAUS[i])return DEGRAUS[i];return Math.ceil((wk+1)/5)*5}
 // Preços de venda estimados por modelo (para a previsão). Modelos sem preço: custo + lucro médio do mês.
-var PRECOS={'iphone 11':97,'iphone xr':85,'macbook pro 2019':300,'iphone 11 pro':120,'mac mini':90,'iphone 12':117.5,'iphone 12 pro':80};
-var PRECO_REF={'REF 825':100,'REF 843':200,'REF 848':200,'REF 882':210};
+var PRECOS={'iphone 11':97,'iphone xr':85,'macbook pro 2019':300,'iphone 11 pro':120,'mac mini':90,'iphone 12':117.5,'iphone 12 pro':80,'iphone 13':177.5,'iphone 14 pro':300,'iphone 14 pro max':300}; // 24/11: 13 (175-180), 14 Pro e 14 Pro Max (300)
+var PRECO_REF={'REF 825':100,'REF 843':200,'REF 848':200,'REF 882':210,'REF 926':225}; // 24/11: 926 traseira partida, 220-230
 // 12/11: fora do lucro potencial (provavelmente não chega: Vinted Go + vendedor sem avaliações)
 var FORA_PREV={'REF 882':1,'REF 827':1,'REF 848':1}; // 13/11: 827 e 848 provavelmente vão ser reembolsados
 function temPreco(x){var k=String(x.p).toLowerCase().replace(/\s+/g,' ').trim();if(typeof LP!=='undefined'&&LP[x.r]!=null)return LP[x.r];return PRECO_REF[x.r]!=null?PRECO_REF[x.r]:(PRECOS[k]!=null?PRECOS[k]:null)}
